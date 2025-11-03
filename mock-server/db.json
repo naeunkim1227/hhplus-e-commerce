@@ -1,0 +1,346 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "김철수",
+      "balance": 100000.00,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "이영희",
+      "balance": 50000.00,
+      "created_at": "2024-01-02T00:00:00Z",
+      "updated_at": "2024-01-02T00:00:00Z"
+    },
+    {
+      "id": 3,
+      "name": "박민수",
+      "balance": 200000.00,
+      "created_at": "2024-01-03T00:00:00Z",
+      "updated_at": "2024-01-03T00:00:00Z"
+    }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "name": "노트북",
+      "price": 1500000.00,
+      "stock": 50,
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "무선 마우스",
+      "price": 35000.00,
+      "stock": 200,
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": 3,
+      "name": "기계식 키보드",
+      "price": 89000.00,
+      "stock": 150,
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": 4,
+      "name": "27인치 모니터",
+      "price": 450000.00,
+      "stock": 30,
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": 5,
+      "name": "USB-C 케이블",
+      "price": 15000.00,
+      "stock": 0,
+      "status": "OUT_OF_STOCK",
+      "version": 1,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "cart_items": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "product_id": 1,
+      "quantity": 1,
+      "created_at": "2024-01-10T10:00:00Z",
+      "updated_at": "2024-01-10T10:00:00Z"
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "product_id": 2,
+      "quantity": 2,
+      "created_at": "2024-01-10T10:05:00Z",
+      "updated_at": "2024-01-10T10:05:00Z"
+    },
+    {
+      "id": 3,
+      "user_id": 2,
+      "product_id": 3,
+      "quantity": 1,
+      "created_at": "2024-01-11T14:20:00Z",
+      "updated_at": "2024-01-11T14:20:00Z"
+    }
+  ],
+  "coupons": [
+    {
+      "id": 1,
+      "code": "WELCOME2024",
+      "name": "신규 가입 환영 쿠폰",
+      "total_quantity": 1000,
+      "issued_quantity": 150,
+      "start_date": "2024-01-01T00:00:00Z",
+      "end_date": "2024-12-31T23:59:59Z",
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-15T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "code": "WINTER20",
+      "name": "겨울 시즌 20% 할인",
+      "total_quantity": 500,
+      "issued_quantity": 320,
+      "start_date": "2024-11-01T00:00:00Z",
+      "end_date": "2025-02-28T23:59:59Z",
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": "2024-11-01T00:00:00Z",
+      "updated_at": "2024-12-01T00:00:00Z"
+    },
+    {
+      "id": 3,
+      "code": "FLASH50",
+      "name": "플래시 세일 50개 한정",
+      "total_quantity": 50,
+      "issued_quantity": 50,
+      "start_date": "2024-10-01T00:00:00Z",
+      "end_date": "2024-10-31T23:59:59Z",
+      "status": "SOLD_OUT",
+      "version": 1,
+      "created_at": "2024-10-01T00:00:00Z",
+      "updated_at": "2024-10-05T12:00:00Z"
+    }
+  ],
+  "user_coupons": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "coupon_id": 1,
+      "status": "AVAILABLE",
+      "issued_at": "2024-01-02T00:00:00Z",
+      "used_at": null,
+      "expired_at": "2024-12-31T23:59:59Z"
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "coupon_id": 2,
+      "status": "USED",
+      "issued_at": "2024-11-05T10:00:00Z",
+      "used_at": "2024-11-10T15:30:00Z",
+      "expired_at": "2025-02-28T23:59:59Z"
+    },
+    {
+      "id": 3,
+      "user_id": 2,
+      "coupon_id": 1,
+      "status": "AVAILABLE",
+      "issued_at": "2024-01-03T00:00:00Z",
+      "used_at": null,
+      "expired_at": "2024-12-31T23:59:59Z"
+    },
+    {
+      "id": 4,
+      "user_id": 3,
+      "coupon_id": 3,
+      "status": "EXPIRED",
+      "issued_at": "2024-10-02T00:00:00Z",
+      "used_at": null,
+      "expired_at": "2024-10-31T23:59:59Z"
+    }
+  ],
+  "orders": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "status": "PAYMENT_COMPLETED",
+      "coupon_id": 2,
+      "total_amount": 1570000.00,
+      "discount_amount": 314000.00,
+      "final_amount": 1256000.00,
+      "created_at": "2024-01-15T10:00:00Z",
+      "orderd_at": "2024-01-15T10:05:00Z",
+      "updated_at": "2024-01-15T10:05:00Z"
+    },
+    {
+      "id": 2,
+      "user_id": 2,
+      "status": "DELIVERED",
+      "coupon_id": null,
+      "total_amount": 89000.00,
+      "discount_amount": 0.00,
+      "final_amount": 89000.00,
+      "created_at": "2024-01-12T14:30:00Z",
+      "orderd_at": "2024-01-12T14:35:00Z",
+      "updated_at": "2024-01-18T09:00:00Z"
+    },
+    {
+      "id": 3,
+      "user_id": 3,
+      "status": "PENDING",
+      "coupon_id": null,
+      "total_amount": 450000.00,
+      "discount_amount": 0.00,
+      "final_amount": 450000.00,
+      "created_at": "2024-01-20T11:00:00Z",
+      "orderd_at": null,
+      "updated_at": "2024-01-20T11:00:00Z"
+    }
+  ],
+  "order_items": [
+    {
+      "id": 1,
+      "order_id": 1,
+      "product_id": 1,
+      "quantity": 1,
+      "price": 1500000.00,
+      "created_at": "2024-01-15T10:00:00Z"
+    },
+    {
+      "id": 2,
+      "order_id": 1,
+      "product_id": 2,
+      "quantity": 2,
+      "price": 35000.00,
+      "created_at": "2024-01-15T10:00:00Z"
+    },
+    {
+      "id": 3,
+      "order_id": 2,
+      "product_id": 3,
+      "quantity": 1,
+      "price": 89000.00,
+      "created_at": "2024-01-12T14:30:00Z"
+    },
+    {
+      "id": 4,
+      "order_id": 3,
+      "product_id": 4,
+      "quantity": 1,
+      "price": 450000.00,
+      "created_at": "2024-01-20T11:00:00Z"
+    }
+  ],
+  "point_history": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "type": "EARNED",
+      "amount": 10000.00,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "type": "USED",
+      "amount": -1256000.00,
+      "created_at": "2024-01-15T10:05:00Z",
+      "updated_at": "2024-01-15T10:05:00Z"
+    },
+    {
+      "id": 3,
+      "user_id": 2,
+      "type": "EARNED",
+      "amount": 5000.00,
+      "created_at": "2024-01-02T00:00:00Z",
+      "updated_at": "2024-01-02T00:00:00Z"
+    },
+    {
+      "id": 4,
+      "user_id": 2,
+      "type": "USED",
+      "amount": -89000.00,
+      "created_at": "2024-01-12T14:35:00Z",
+      "updated_at": "2024-01-12T14:35:00Z"
+    },
+    {
+      "id": 5,
+      "user_id": 3,
+      "type": "EARNED",
+      "amount": 20000.00,
+      "created_at": "2024-01-03T00:00:00Z",
+      "updated_at": "2024-01-03T00:00:00Z"
+    }
+  ],
+  "product_reservations": [
+    {
+      "id": 1,
+      "order_id": 1,
+      "product_id": 1,
+      "quantity": 1,
+      "status": "CONFIRMED",
+      "reserved_at": "2024-01-15T10:00:00Z",
+      "expired_at": "2024-01-15T10:15:00Z",
+      "released_at": null,
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:05:00Z"
+    },
+    {
+      "id": 2,
+      "order_id": 1,
+      "product_id": 2,
+      "quantity": 2,
+      "status": "CONFIRMED",
+      "reserved_at": "2024-01-15T10:00:00Z",
+      "expired_at": "2024-01-15T10:15:00Z",
+      "released_at": null,
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:05:00Z"
+    },
+    {
+      "id": 3,
+      "order_id": 2,
+      "product_id": 3,
+      "quantity": 1,
+      "status": "CONFIRMED",
+      "reserved_at": "2024-01-12T14:30:00Z",
+      "expired_at": "2024-01-12T14:45:00Z",
+      "released_at": null,
+      "created_at": "2024-01-12T14:30:00Z",
+      "updated_at": "2024-01-12T14:35:00Z"
+    },
+    {
+      "id": 4,
+      "order_id": 3,
+      "product_id": 4,
+      "quantity": 1,
+      "status": "RESERVED",
+      "reserved_at": "2024-01-20T11:00:00Z",
+      "expired_at": "2024-01-20T11:15:00Z",
+      "released_at": null,
+      "created_at": "2024-01-20T11:00:00Z",
+      "updated_at": "2024-01-20T11:00:00Z"
+    }
+  ]
+}
