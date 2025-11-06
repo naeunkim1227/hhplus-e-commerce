@@ -11,7 +11,7 @@ import java.util.Map;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "에러 응답")
-public class ErrorResponse {
+public class CommonErrorResponse {
 
     @Schema(description = "에러 코드", example = "PRODUCT_NOT_FOUND")
     private String code;
@@ -22,15 +22,15 @@ public class ErrorResponse {
     @Schema(description = "에러 상세 정보")
     private Map<String, Object> details;
 
-    public static ErrorResponse of(String code, String message) {
-        return ErrorResponse.builder()
+    public static CommonErrorResponse of(String code, String message) {
+        return CommonErrorResponse.builder()
                 .code(code)
                 .message(message)
                 .build();
     }
 
-    public static ErrorResponse of(String code, String message, Map<String, Object> details) {
-        return ErrorResponse.builder()
+    public static CommonErrorResponse of(String code, String message, Map<String, Object> details) {
+        return CommonErrorResponse.builder()
                 .code(code)
                 .message(message)
                 .details(details)
