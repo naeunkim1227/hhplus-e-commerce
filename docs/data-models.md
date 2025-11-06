@@ -23,8 +23,8 @@ erDiagram
         bigint id PK
         varchar(100) name "NOT NULL"
         decimal(15_2) balance
-        timestamp created_at "NOT NULL, DEFAULT now()"
-        timestamp updated_at "NOT NULL, DEFAULT now()"
+        datetime created_at "NOT NULL, DEFAULT now()"
+        datetime updated_at "NOT NULL, DEFAULT now()"
     }
 
     PRODUCT {
@@ -33,8 +33,8 @@ erDiagram
         decimal(15_2) price "NOT NULL"
         bigint stock
         varchar status "ACTIVE/INACTIVE/OUT_OF_STOCK/DISCONTINUED"
-        timestamp created_at "NOT NULL, DEFAULT now()"
-        timestamp updated_at "NOT NULL, DEFAULT now()"
+        datetime created_at "NOT NULL, DEFAULT now()"
+        datetime updated_at "NOT NULL, DEFAULT now()"
     }
 
     CART_ITEM {
@@ -42,8 +42,8 @@ erDiagram
         bigint user_id FK
         bigint product_id FK
         int quantity
-        timestamp created_at "NOT NULL, DEFAULT now()"
-        timestamp updated_at "NOT NULL, DEFAULT now()"
+        datetime created_at "NOT NULL, DEFAULT now()"
+        datetime updated_at "NOT NULL, DEFAULT now()"
     }
 
     ORDER {
@@ -54,9 +54,9 @@ erDiagram
         decimal(15_2) total_amount
         decimal(15_2) discount_amount
         decimal(15_2) final_amount
-        timestamp created_at "NOT NULL, DEFAULT now()"
-        timestamp orderd_at
-        timestamp updated_at "NOT NULL, DEFAULT now()"
+        datetime created_at "NOT NULL, DEFAULT now()"
+        datetime orderd_at
+        datetime updated_at "NOT NULL, DEFAULT now()"
     }
 
     ORDER_ITEM {
@@ -65,20 +65,22 @@ erDiagram
         bigint product_id FK
         int quantity
         decimal(15_2) price
-        timestamp created_at "NOT NULL, DEFAULT now()"
+        datetime created_at "NOT NULL, DEFAULT now()"
     }
 
     COUPON {
         bigint id PK
         varchar(100) code
         varchar(100) name
+        varchar(100) type "RATE/STATIC"
+        야
         int total_quantity
         int issued_quantity
-        timestamp start_date
-        timestamp end_date
+        datetime start_date
+        datetime end_date
         varchar(100) status "ACTIVE/INACTIVE/EXPIRED/SOLD_OUT"
-        timestamp created_at "NOT NULL, DEFAULT now()"
-        timestamp updated_at "NOT NULL, DEFAULT now()"
+        datetime created_at "NOT NULL, DEFAULT now()"
+        datetime updated_at "NOT NULL, DEFAULT now()"
     }
 
     USER_COUPON {
@@ -86,9 +88,9 @@ erDiagram
         bigint user_id FK "NOT NULL"
         bigint coupon_id FK
         bigint status 
-        timestamp issued_at
-        timestamp used_at    
-        timestamp expired_at
+        datetime issued_at
+        datetime used_at    
+        datetime expired_at
     }
 
     POINT_HISTORY {
@@ -96,21 +98,20 @@ erDiagram
         bigint user_id FK
         varchar type "EARNED/USED/EXPIRED/REFUNDED"
         decimal(15_2) amount
-        timestamp created_at "NOT NULL, DEFAULT now()"
-        timestamp updated_at "NOT NULL, DEFAULT now()"
+        datetime created_at "NOT NULL, DEFAULT now()"
+        datetime updated_at "NOT NULL, DEFAULT now()"
     }
 
     PRODUCT_RESERVATION {
         bigint id PK
         bigint order_id FK "NOT NULL"
         bigint product_id FK "NOT NULL"
-        int quantity "NOT NULL"
+        int stock "NOT NULL"
         varchar(20) status "NOT NULL, RESERVED/CONFIRMED/RELEASED/EXPIRED"
-        timestamp reserved_at "NOT NULL, DEFAULT now()"
-        timestamp expired_at "NOT NULL"
-        timestamp released_at
-        timestamp created_at "NOT NULL, DEFAULT now()"
-        timestamp updated_at "NOT NULL, DEFAULT now()"
+        datetime reserved_at "NOT NULL, DEFAULT now()"
+        datetime expired_at "NOT NULL"
+        datetime released_atdatetime created_at "NOT NULL, DEFAULT now()"
+        datetime updated_at "NOT NULL, DEFAULT now()"
     }
 
 
@@ -127,8 +128,8 @@ CREATE TABLE `user` (
                         `id` bigint PRIMARY KEY,
                         `name` varchar(100) NOT NULL,
                         `balance` decimal(15,2),
-                        `created_at` timestamp NOT NULL DEFAULT (now()),
-                        `updated_at` timestamp NOT NULL DEFAULT (now())
+                        `created_at` datetime NOT NULL DEFAULT (now()),
+                        `updated_at` datetime NOT NULL DEFAULT (now())
 );
 
 CREATE TABLE `product` (
@@ -136,10 +137,11 @@ CREATE TABLE `product` (
                            `name` varchar(100) NOT NULL,
                            `price` decimal(15,2) NOT NULL,
                            `stock` bigint,
+  
                            `status` varchar(255),
                            `version` bigint NOT NULL,
-                           `created_at` timestamp NOT NULL DEFAULT (now()),
-                           `updated_at` timestamp NOT NULL DEFAULT (now())
+                           `created_at` datetime NOT NULL DEFAULT (now()),
+                           `updated_at` datetime NOT NULL DEFAULT (now())
 );
 
 CREATE TABLE `cart_item` (
@@ -147,8 +149,8 @@ CREATE TABLE `cart_item` (
                              `user_id` bigint,
                              `product_id` bigint,
                              `quantity` int,
-                             `created_at` timestamp NOT NULL DEFAULT (now()),
-                             `updated_at` timestamp NOT NULL DEFAULT (now())
+                             `created_at` datetime NOT NULL DEFAULT (now()),
+                             `updated_at` datetime NOT NULL DEFAULT (now())
 );
 
 CREATE TABLE `order` (
@@ -159,9 +161,9 @@ CREATE TABLE `order` (
                          `total_amount` decimal(15,2),
                          `discount_amount` decimal(15,2),
                          `final_amount` decimal(15,2),
-                         `created_at` timestamp NOT NULL DEFAULT (now()),
-                         `orderd_at` timestamp,
-                         `updated_at` timestamp NOT NULL DEFAULT (now())
+                         `created_at` datetime NOT NULL DEFAULT (now()),
+                         `orderd_at` datetime,
+                         `updated_at` datetime NOT NULL DEFAULT (now())
 );
 
 CREATE TABLE `order_item` (
@@ -170,7 +172,7 @@ CREATE TABLE `order_item` (
                               `product_id` bigint,
                               `quantity` int,
                               `price` decimal(15,2),
-                              `created_at` timestamp NOT NULL DEFAULT (now())
+                              `created_at` datetime NOT NULL DEFAULT (now())
 );
 
 CREATE TABLE `coupon` (
@@ -179,12 +181,12 @@ CREATE TABLE `coupon` (
                           `name` varchar(100),
                           `total_quantity` int,
                           `issued_quantity` int,
-                          `start_date` timestamp,
-                          `end_date` timestamp,
+                          `start_date` datetime,
+                          `end_date` datetime,
                           `status` varchar(100),
                           `version` bigint NOT NULL,
-                          `created_at` timestamp NOT NULL DEFAULT (now()),
-                          `updated_at` timestamp NOT NULL DEFAULT (now())
+                          `created_at` datetime NOT NULL DEFAULT (now()),
+                          `updated_at` datetime NOT NULL DEFAULT (now())
 );
 
 CREATE TABLE `user_coupon` (
@@ -192,9 +194,9 @@ CREATE TABLE `user_coupon` (
                                `user_id` bigint NOT NULL,
                                `coupon_id` bigint,
                                `status` varchar(100),
-                               `issued_at` timestamp,
-                               `used_at` timestamp,
-                               `expired_at` timestamp
+                               `issued_at` datetime,
+                               `used_at` datetime,
+                               `expired_at` datetime
 );
 
 CREATE TABLE `point_history` (
@@ -202,8 +204,8 @@ CREATE TABLE `point_history` (
                                  `user_id` bigint,
                                  `type` varchar(100),
                                  `amount` decimal(15,2),
-                                 `created_at` timestamp NOT NULL DEFAULT (now()),
-                                 `updated_at` timestamp NOT NULL DEFAULT (now())
+                                 `created_at` datetime NOT NULL DEFAULT (now()),
+                                 `updated_at` datetime NOT NULL DEFAULT (now())
 );
 
 CREATE TABLE `product_reservation` (
@@ -213,11 +215,11 @@ CREATE TABLE `product_reservation` (
                                        `quantity` int NOT NULL,
                                        `status` varchar(100) NOT NULL,
                     
-                                       `reserved_at` timestamp NOT NULL DEFAULT (now()),
-                                       `expired_at` timestamp NOT NULL,
-                                       `released_at` timestamp,
-                                       `created_at` timestamp NOT NULL DEFAULT (now()),
-                                       `updated_at` timestamp NOT NULL DEFAULT (now())
+                                       `reserved_at` datetime NOT NULL DEFAULT (now()),
+                                       `expired_at` datetime NOT NULL,
+                                       `released_at` datetime,
+                                       `created_at` datetime NOT NULL DEFAULT (now()),
+                                       `updated_at` datetime NOT NULL DEFAULT (now())
 );
 
 CREATE INDEX `idx_order_user` ON `order` (`user_id`);
@@ -239,7 +241,6 @@ CREATE INDEX `idx_stock_reservation_expired` ON `product_reservation` (`expired_
 ALTER TABLE `product` COMMENT = 'Status values:
 - ACTIVE: 판매 중
 - INACTIVE: 판매 중지
-- OUT_OF_STOCK: 품절
 - DISCONTINUED: 단종
 ';
 

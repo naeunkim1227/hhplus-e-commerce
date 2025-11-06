@@ -488,12 +488,7 @@
 ```json
 {
   "status" : 204,
-  "data": {
-    "id": 1,
-    "price": 19000,
-    "quantity": 1,
-    "subtotal": 19000
-  },
+  "data": null,
   "error": null,
   "timestamp": "2025-10-28T12:00:00Z"
 }
@@ -518,28 +513,19 @@
 **Request Body:**
 ```json
 {
-  "items": [
-    {
-      "productId": 1,
-      "quantity": 1,
-    },
-    {
-      "productId": 2,
-      "quantity": 2
-    }
-  ],
+  "userId" : 1,
+  "cartItemIds": [101, 102, 103],
   "couponId": 10
 }
 ```
 
 **Request 필드 설명:**
 
-| 필드 | 타입 | 필수 | 설명 |
-|-----|------|------|------|
-| items | array | Y | 주문 상품 목록 (최소 1개) |
-| items[].productId | integer | Y | 상품 ID |
-| items[].quantity | integer | Y | 수량 (1 이상) |
-| couponId | integer | N | 적용할 쿠폰 ID |
+| 필드 | 타입 | 필수 | 설명                        |
+|-----|------|------|---------------------------|
+| userId | integer | Y | 유저 ID                     |
+| cartItemIds | array | Y | 주문할 cart Item 시퀀스 (최소 1개) |
+| couponId | integer | N | 적용할 쿠폰 ID                 |
 
 **성공 응답:** `201 Created`
 ```json
@@ -715,55 +701,8 @@
 
 ## 4. 쿠폰 API
 
-### 4.1 발급 가능한 쿠폰 목록
 
-**Endpoint:** `GET /coupons`
-
-**설명:** 현재 발급 가능한 쿠폰 목록을 조회합니다.
-
-**성공 응답:** `200 OK`
-```json
-{
-  "status": 200,
-  "data": {
-    "coupons": [
-      {
-        "id": 10,
-        "name": "신규가입 5만원 할인",
-        "remainingQuantity": 245,
-        "expiresAt": "2025-11-30T23:59:59Z",
-        "issuedAt": "2025-11-30T23:59:59Z",
-      },
-      {
-        "id": 11,
-        "name": "10% 할인 쿠폰",
-        "totalQuantity": 500,
-        "remainingQuantity": 0,
-        "expiresAt": "2025-10-31T23:59:59Z",
-        "issuedAt": "2025-10-25T23:59:59Z",
-      }
-    ]
-  },
-  "error": null,
-  "timestamp": "2025-10-28T12:20:00Z"
-}
-```
-#### Response 필드 설명
-
-| 필드 | 타입 | 설명 |
-|-----|------|------|
-| coupons | array | 쿠폰 목록 |
-| coupons[].couponId | integer | 쿠폰 ID |
-| coupons[].name | string | 쿠폰명 |
-| coupons[].totalQuantity | integer | 총 발급 수량 |
-| coupons[].remainingQuantity | integer | 남은 수량 |
-| coupons[].issuedAt | string | 발급 시작 일시 |
-| coupons[].expiresAt | string | 만료 일시 |
-
-
----
-
-### 4.2 선착순 쿠폰 발급
+### 4.1 선착순 쿠폰 발급
 
 **Endpoint:** `POST /coupons/{couponId}/issue`
 
@@ -904,52 +843,3 @@
 | coupons[].expiresAt | string | 만료 일시 |
 | coupons[].usedAt | string | 사용 일시 (미사용 시 null) |
 | coupons[].orderId | integer | 사용된 주문 ID (미사용 시 null) |
-
-### 4.4  쿠폰 적용 가능 여부 조회
-
-**Endpoint:** `GET /coupons/validate`
-
-**설명:** 주문 전 쿠폰 적용 가능 여부를 검증합니다.
-
-**Query Parameters:**
-
-| 파라미터 | 타입 | 필수 | 설명 |
-|---------|------|------|------|
-| couponId | integer | Y | 쿠폰 ID |
-
-**성공 응답:** `200 OK`
-```json
-{
-  "status": 200,
-  "data": {
-    "couponId": 10,
-    "couponName": "신규가입 5만원 할인",
-  },
-  "error": null,
-  "timestamp": "2025-10-28T12:35:00Z"
-}
-```
-
-
-## 참고 사항
-
-### 데이터 타입
-- **날짜/시간**: ISO 8601 형식 (예: `2025-10-28T12:00:00Z`)
-- **금액**: 정수형, 원화 기준 (예: 10000 = 10,000원)
-- **ID**: 정수형 (Long)
-
-### 페이지네이션
-- 기본 페이지 크기: 20
-- 최대 페이지 크기: 100
-- 페이지 번호는 1부터 시작
-
-### Rate Limiting
-- IP당: 1000 요청/분
-- 사용자당: 100 요청/분
-- 쿠폰 발급 API: 10 요청/분
-
-
-### 외부 데이터 전송
-- 주문 완료 후 비동기로 외부 시스템에 전송
-- 전송 실패 시에도 주문은 정상 처리
-- 실패한 전송은 재시도 큐에 등록
