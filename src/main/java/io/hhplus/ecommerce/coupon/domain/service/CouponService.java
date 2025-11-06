@@ -61,4 +61,27 @@ public class CouponService {
         }
         return discountAmount;
     }
+
+    /**
+     * 쿠폰 발급 (선착순)
+     */
+    public UserCoupon issueCoupon(Long userId, Long couponId) {
+        Coupon coupon = this.getCoupon(couponId);
+
+        userCouponRepository.findByUserIdAndCouponId(userId, couponId)
+                .ifPresent(c -> {
+                    throw new BusinessException(CouponErrorCode.COUPON_ALREADY_ISSUED);
+                });
+
+        // 3. 쿠폰 발급 가능 여부 검증
+        coupon.isAvailableIssue();
+
+        // 4. 쿠폰 발급 수량 증가
+        coupon.increaseIssuedQuantity();
+        couponRepository.save(coupon);
+
+        // 5. 사용자 쿠폰 발급
+        UserCoupon userCoupon = UserCoupon.create(userId, couponId);
+        return userCouponRepository.save(userCoupon);
+    }
 }

@@ -32,4 +32,15 @@ public class UserCoupon {
         return this.usedAt != null;
     }
 
+    public static UserCoupon create(Long userId, Long couponId) {
+        return UserCoupon.builder()
+                .userId(userId)
+                .couponId(couponId)
+                .build();
+    }
+
+
+
+
+
 }

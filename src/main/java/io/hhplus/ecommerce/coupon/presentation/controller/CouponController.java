@@ -1,9 +1,11 @@
 package io.hhplus.ecommerce.coupon.presentation.controller;
 
 import io.hhplus.ecommerce.common.response.CommonResponse;
+import io.hhplus.ecommerce.coupon.application.usecase.CouponIssueUseCase;
 import io.hhplus.ecommerce.coupon.application.usecase.CouponUserUseCase;
 import io.hhplus.ecommerce.coupon.domain.entity.UserCoupon;
-import io.hhplus.ecommerce.coupon.domain.service.CouponService;
+import io.hhplus.ecommerce.queue.QueueAnnotation;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,19 +23,32 @@ import java.util.Map;
 public class CouponController {
 
     private final CouponUserUseCase couponUserUseCase;
+    private final CouponIssueUseCase couponIssueUseCase;
 
     @PostMapping("/{couponId}/issue")
+    @QueueAnnotation(topic = "coupon", key = "#userId")  // 동시성 제어 적용
+    @Operation(summary = "쿠폰 발급", description = "선착순 쿠폰 발급 (동시성 제어 적용)")
     public CommonResponse<Map<String, Object>> issueCoupon(
             @Parameter(description = "쿠폰 ID", example = "1")
-            @PathVariable Long couponId) {
+            @PathVariable Long couponId,
+            @Parameter(description = "사용자 ID", example = "1")
+            @RequestParam Long userId) {
+
+        // 쿠폰 발급 UseCase 실행
+        UserCoupon userCoupon = couponIssueUseCase.execute(userId, couponId);
+
         Map<String, Object> data = new HashMap<>();
-        data.put("message", "선착순 쿠폰 발급 API - Mock");
+        data.put("userCouponId", userCoupon.getId());
+        data.put("couponId", userCoupon.getCouponId());
+        data.put("userId", userCoupon.getUserId());
+        data.put("issuedAt", userCoupon.getIssuedAt());
 
         return CommonResponse.success(HttpStatus.CREATED.value(), data);
     }
 
-    @GetMapping("/users/coupons")
-    public CommonResponse<List> getUserCoupons(
+    @GetMapping("/users/{userId}")
+    @Operation(summary = "내 쿠폰 조회", description = "사용자가 발급받은 쿠폰 목록 조회")
+    public CommonResponse<List<UserCoupon>> getUserCoupons(
             @Parameter(description = "유저 ID", example = "1")
             @PathVariable Long userId) {
 
