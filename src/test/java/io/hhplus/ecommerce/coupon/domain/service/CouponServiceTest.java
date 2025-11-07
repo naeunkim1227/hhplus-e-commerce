@@ -29,7 +29,6 @@ public class CouponServiceTest {
     @InjectMocks
     private CouponService couponService;
 
-
     @Test
     @DisplayName("유저의 쿠폰을 조회할 수 있다.")
     void getUsercoupon_Success(){
