@@ -56,7 +56,7 @@ public class OrderFixture {
         return Order.builder()
                 .id(1L)
                 .userId(1L)
-                .status(OrderStatus.COMPLETED)
+                .status(OrderStatus.PAYMENT_COMPLETED)
                 .couponId(null)
                 .totalAmount(BigDecimal.valueOf(100000))
                 .discountAmount(BigDecimal.ZERO)

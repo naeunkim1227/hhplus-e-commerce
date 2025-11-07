@@ -8,5 +8,4 @@ public enum OrderStatus {
     DELIVERED,            // 배송 완료
     CANCELLED,             // 취소됨
     FAILED,
-    COMPLETED//결제 실패
 }

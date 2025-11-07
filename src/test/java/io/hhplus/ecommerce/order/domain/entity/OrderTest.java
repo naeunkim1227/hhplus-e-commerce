@@ -44,10 +44,10 @@ class OrderTest {
             BigDecimal.valueOf(50000), BigDecimal.ZERO, BigDecimal.valueOf(50000));
 
         // When
-        order.changeStatus(OrderStatus.COMPLETED);
+        order.changeStatus(OrderStatus.PAYMENT_COMPLETED);
 
         // Then
-        assertThat(order.getStatus()).isEqualTo(OrderStatus.COMPLETED);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAYMENT_COMPLETED);
         assertThat(order.getUpdatedAt()).isNotNull();
     }
 }
