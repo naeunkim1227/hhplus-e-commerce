@@ -46,11 +46,24 @@
 
 **의존성 규칙**: 내부(Domain) → 외부(Infrastructure)로 의존하지 않음 (의존성 역전 원칙)
 
+ ### 구조 설명
+
+- Presentation : Controller 및 api요청시 dto인 request와 response구성하였습니다.
+- Application : UseCase 와 Presentation에서 전달하는 데이터를 가공하는 dto인 command와 dto를 구성하였습니다.
+- Domain :  Service와 Repository, Entity가 있으며 서비스별 에러코드를 관리하는 exception 폴더를 구성하였습니다. entity로 관리하지 못하는 정책은 policy를 생성하여 validator에서 검증하도록 구현했습니다.
+- Infrastructure : 도메인별로 repository를 생성하고 inmemory(도메인)repository로 구현체를 생성하였습니다. 공통폴더의 RepositoryConfig파일을 통해 inmemory(도메인)repository를 설정하였습니다.
+
+### 기타
+
+- quque : 선착순 쿠폰 발급을 위해 구현한 quque입니다. aop를 통해 사용하기 위해 커스텀 어노테이션을 생성해보았고, 주문과 쿠폰에 대하여 동시성 제어의 키가 각각 다를거라 생각했기 때문에 QueueManager를 생성하고 각각 구현체를 생성하는 걸로 구성하였습니다. OrderQueueManager는 이후 확장을 위해 파일 구현만 해놓았고 적용은 하지 않았습니다.
+- 이벤트 : payment의 경우 결제시 타사 연동을 통해 진행을 한다고 가정하였고 비동기로 처리가 되어야 한다고 생각했기 때문에 이벤트 핸들러를 생성하여 이벤트 발행으로 결제 서비스를 생성해보았습니다.  
+
 
 ```java
 // 도메인 엔티티 - 순수 비즈니스 로직
 @Getter
-public class Product {
+public class Product {<img width="353" height="251" alt="스크린샷 2025-11-07 오전 9 16 02" src="https://github.com/user-attachments/assets/14936c31-ec6d-4255-8c4d-93523ae329b2" />
+
     private Long stock;
 
     // 비즈니스 규칙: 재고 감소
@@ -62,7 +75,6 @@ public class Product {
     }
 }
 ```
-
 
 
 ## ⚡ 동시성 제어 구현
