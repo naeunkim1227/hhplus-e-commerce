@@ -28,22 +28,14 @@ public class CouponController {
     @PostMapping("/{couponId}/issue")
     @QueueAnnotation(topic = "coupon", key = "#userId")  // 동시성 제어 적용
     @Operation(summary = "쿠폰 발급", description = "선착순 쿠폰 발급 (동시성 제어 적용)")
-    public CommonResponse<Map<String, Object>> issueCoupon(
+    public CommonResponse<UserCoupon> issueCoupon(
             @Parameter(description = "쿠폰 ID", example = "1")
             @PathVariable Long couponId,
             @Parameter(description = "사용자 ID", example = "1")
             @RequestParam Long userId) {
 
-        // 쿠폰 발급 UseCase 실행
         UserCoupon userCoupon = couponIssueUseCase.execute(userId, couponId);
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("userCouponId", userCoupon.getId());
-        data.put("couponId", userCoupon.getCouponId());
-        data.put("userId", userCoupon.getUserId());
-        data.put("issuedAt", userCoupon.getIssuedAt());
-
-        return CommonResponse.success(HttpStatus.CREATED.value(), data);
+        return CommonResponse.success(userCoupon);
     }
 
     @GetMapping("/users/{userId}")
@@ -51,8 +43,6 @@ public class CouponController {
     public CommonResponse<List<UserCoupon>> getUserCoupons(
             @Parameter(description = "유저 ID", example = "1")
             @PathVariable Long userId) {
-
-        List<UserCoupon> userCouponList = couponUserUseCase.excute(userId);
-        return CommonResponse.success(userCouponList);
+        return CommonResponse.success(couponUserUseCase.excute(userId));
     }
 }

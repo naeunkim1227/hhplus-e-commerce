@@ -58,9 +58,7 @@ public class ProductController {
      */
     @PostMapping
     public CommonResponse createProduct(@RequestBody @Valid ProductCreateRequest request) {
-        ProductCreateCommand command = request.toCommand();
-        ProductDto dto  = productCreateUseCase.execute(command);
-        ProductResponse product = ProductResponse.from(dto);
-        return CommonResponse.success(product);
+        ProductDto dto  = productCreateUseCase.execute(request.toCommand());
+        return CommonResponse.success(ProductResponse.from(dto));
     }
 }

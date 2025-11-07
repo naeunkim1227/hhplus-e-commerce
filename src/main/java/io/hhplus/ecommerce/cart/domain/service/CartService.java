@@ -6,6 +6,7 @@ import io.hhplus.ecommerce.cart.application.dto.command.CartItemUpdateCommand;
 import io.hhplus.ecommerce.cart.domain.entity.CartItem;
 import io.hhplus.ecommerce.cart.domain.exception.CartErrorCode;
 import io.hhplus.ecommerce.cart.domain.repository.CartRepository;
+import io.hhplus.ecommerce.cart.domain.validator.CartValidator;
 import io.hhplus.ecommerce.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.util.Optional;
 public class CartService {
 
     private final CartRepository cartRepository;
+    private final CartValidator cartValidator;
 
     /**
      * 장바구니에 상품 추가
@@ -32,15 +34,17 @@ public class CartService {
         CartItem newitem;
 
         if (existingItem.isPresent()) {
-            CartItem item = existingItem.get();
+            CartItem existingCartItem = existingItem.get();
+            cartValidator.validate(command.getUserId(), existingCartItem);
             newitem = CartItem.builder()
-                    .id(item.getId())
-                    .userId(item.getUserId())
-                    .productId(item.getProductId())
-                    .quantity(item.getQuantity() + command.getQuantity())
-                    .createdAt(item.getCreatedAt())
+                    .id(existingCartItem.getId())
+                    .userId(existingCartItem.getUserId())
+                    .productId(existingCartItem.getProductId())
+                    .quantity(existingCartItem.getQuantity() + command.getQuantity())
+                    .createdAt(existingCartItem.getCreatedAt())
                     .updatedAt(LocalDateTime.now())
                     .build();
+
         } else {
             newitem = CartItem.builder()
                     .userId(command.getUserId())
@@ -59,6 +63,9 @@ public class CartService {
      */
     public CartItem updateCartItem(CartItemUpdateCommand command) {
         Optional<CartItem> existingItem = cartRepository.findById(command.getCartItemId());
+        if(existingItem.isEmpty()){
+            throw new BusinessException(CartErrorCode.CART_NOT_FOUND);
+        }
 
         CartItem cartItem = CartItem.builder()
                         .quantity(existingItem.get().getQuantity() + command.getQuantity())
@@ -69,7 +76,6 @@ public class CartService {
 
         return  cartRepository.save(cartItem);
     }
-
 
     /**
      * 사용자의 장바구니 아이템 조회
@@ -82,6 +88,12 @@ public class CartService {
      * 장바구니 아이템 삭제
      */
     public void deleteCartItem(CartItemDeleteCommand command) {
+        Optional<CartItem> existingItem = cartRepository.findById(command.getCartItemId());
+        if(existingItem.isEmpty()){
+            throw new BusinessException(CartErrorCode.CART_NOT_FOUND);
+        }
+
+        cartValidator.validate(command.getUserId(), existingItem.get());
         cartRepository.deleteById(command.getCartItemId());
     }
 
@@ -89,6 +101,10 @@ public class CartService {
      * 사용자의 전체 장바구니 비우기
      */
     public void clearCart(Long userId) {
+        List<CartItem> cartItemList = cartRepository.findByUserId(userId);
+        if(cartItemList.isEmpty()){
+            throw new BusinessException(CartErrorCode.CART_NOT_FOUND);
+        }
         cartRepository.deleteByUserId(userId);
     }
 

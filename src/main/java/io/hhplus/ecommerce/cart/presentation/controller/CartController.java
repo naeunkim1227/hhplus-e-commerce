@@ -39,29 +39,23 @@ public class CartController {
     public CommonResponse<CartResponse> getCart(
             @Parameter(description = "사용자 ID", example = "1")
             @RequestParam Long userId) {
-        List<CartItemDto> cartItemDtos = cartGetUseCase.execute(userId);
-        CartResponse response = CartResponse.from(userId,cartItemDtos);
+        CartResponse response = CartResponse.from(userId,cartGetUseCase.execute(userId));
         return CommonResponse.success(response);
     }
 
     @Operation(summary = "장바구니 담기", description = "장바구니에 상품을 추가합니다.")
     @PostMapping("/items")
     public CommonResponse<CartItemResponse> addCartItem(@Valid @RequestBody CartItemAddRequest request) {
-        CartItemAddCommand command = request.toCommand();
-        CartItemDto cartItemDto = cartAddUseCase.execute(command);
-        CartItemResponse response = CartItemResponse.from(cartItemDto);
-
-        return CommonResponse.success(response);
+        CartItemDto cartItemDto = cartAddUseCase.execute(request.toCommand());
+        return CommonResponse.success(CartItemResponse.from(cartItemDto));
     }
 
     @Operation(summary = "장바구니 상품 수량 변경", description = "장바구니 상품의 수량을 변경합니다.")
     @PatchMapping("/items/{itemId}")
     public CommonResponse<CartItemResponse> updateCartItem(
             @Valid @RequestBody CartItemUpdateRequest request) {
-        CartItemUpdateCommand command = request.toCommand();
-        CartItemDto cartItemDto = cartUpdateUseCase.excute(command);
-        CartItemResponse response = CartItemResponse.from(cartItemDto);
-        return CommonResponse.success(response);
+        CartItemDto cartItemDto = cartUpdateUseCase.excute(request.toCommand());
+        return CommonResponse.success(CartItemResponse.from(cartItemDto));
     }
 
     @Operation(summary = "장바구니 상품 삭제", description = "장바구니에서 상품을 삭제합니다.")

@@ -35,8 +35,7 @@ public class OrderController {
     @PostMapping("/carts")
     public CommonResponse<OrderResponse> createOrderCart(
             @Valid  @RequestBody OrderCreateFromCartRequest request) {
-        OrderCreateFromCartCommand command = request.toCommand();
-        OrderDto orderDto = orderCreateFromCartUseCase.excute(command);
+        OrderDto orderDto = orderCreateFromCartUseCase.excute(request.toCommand());
         OrderResponse response = OrderResponse.from(orderDto);
         return CommonResponse.success(response);
     }
@@ -45,10 +44,9 @@ public class OrderController {
      * 구매창에서 바로 단건 구매
      */
     @PostMapping
-    public CommonResponse<OrderResponse>  createOrderDirect(
+    public CommonResponse<OrderResponse> createOrderDirect(
             @Valid  @RequestBody OrderCreateDirectRequest request) {
-        OrderCreateDirectCommand command =  request.toCommand();
-        OrderDto orderDto = orderCreateDirectUseCase.excute(command);
+        OrderDto orderDto = orderCreateDirectUseCase.excute(request.toCommand());
         OrderResponse response = OrderResponse.from(orderDto);
         return CommonResponse.success(response);
     }
