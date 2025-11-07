@@ -33,9 +33,7 @@
     └── response/                  # 공통 응답 포맷
 ```
 
-### 아키텍처 특징 및 장점
-
-#### 1️⃣ **명확한 책임 분리 (Separation of Concerns)**
+### 아키텍처
 
 | 계층 | 역할 | 의존 방향 |
 |-----|------|----------|
@@ -89,15 +87,15 @@ public class Product {<img width="353" height="251" alt="스크린�
 
 #### 📌 커스텀 `@QueueAnnotation` 설계
 
-사용자별 큐를 생성하여 **동일 사용자의 요청은 순차 처리**, 다른 사용자 요청은 병렬 처리합니다.
+사용자별 큐를 생성하여 동일 사용자의 요청은 순차 처리, 다른 사용자 요청은 병렬 처리합니다.
 
 ```java
-@Target({ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface QueueAnnotation {
-    String key();        // 큐 식별 키 (userId 등)
-    String topic() default "";  // 큐 토픽 (coupon, order 등)
-}
+    @Target({ElementType.METHOD})
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface QueueAnnotation {
+        String key();        // 큐 식별 키 (userId 등)
+        String topic() default "";  // 큐 토픽 (coupon, order 등)
+    }
 ```
 
 #### 📌 Queue Manager 구현 
@@ -135,7 +133,6 @@ public class CouponQueueManager implements QueueManager {
 - 이전 TDD과제에서 동시성 구현시, 메소드에 결합도가 강한것이 아쉬워서
   aop 커스텀 어노테이션을 만들어 구현해 보았습니다.
 
-
 ```java
 @Aspect
 @Component
@@ -152,19 +149,6 @@ public class QueueAspect {
             case "order" -> orderQueueManager.submit(queueAnnotation.key(), task);
         }
     }
-}
-```
-
-### 3. 쿠폰 발급 API 적용 예시
-
-```java
-@PostMapping("/coupons/{couponId}/issue")
-@QueueAnnotation(topic = "coupon", key = "#userId")  // 어노테이션 적용
-public ResponseEntity<CouponIssueResponse> issueCoupon(
-    @PathVariable Long couponId,
-    @RequestParam Long userId
-) {
-    return couponIssueUseCase.execute(command);
 }
 ```
 
@@ -254,16 +238,7 @@ public class PaymentEventHandler {
 }
 ```
 
-### 3. 이벤트 기반 아키텍처 장점
-
-| 장점 | 설명 |
-|-----|------|
-| **느슨한 결합** | PaymentService는 후속 처리 로직을 몰라도 됨 |
-| **비동기 처리** | 결제 후 즉시 응답, 후속 처리는 백그라운드 실행 |
-| **확장성** | 새로운 후속 처리 추가 시 이벤트 핸들러만 추가 |
-| **테스트 용이** | 이벤트 발행 여부만 검증하면 됨 |
-
-### 4. 주문/결제 플로우
+### 3. 주문/결제 플로우
 
 ```
 [주문 생성]
