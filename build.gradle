@@ -1,7 +1,8 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.7'
+    id 'org.springframework.boot' version '3.3.5'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
 
 group = 'io.hhplus'
@@ -31,13 +32,47 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'com.h2database:h2'
-//    runtimeOnly 'com.mysql:mysql-connector-j'
+    runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+    testImplementation 'org.testcontainers:mysql:1.20.3' // 나중에 테스트용
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
+    ignoreFailures = true
+}
+
+// 통합 테스트만 실행하는 태스크
+task integrationTest(type: Test) {
+    useJUnitPlatform {
+        includeTags 'integration'
+    }
+    include '**/*ConcurrencyTest.class'
+    include '**/EcommerceApplicationTests.class'
+}
+
+// 단위 테스트만 실행하는 태스크
+task unitTest(type: Test) {
+    useJUnitPlatform()
+    exclude '**/*ConcurrencyTest.class'
+    exclude '**/EcommerceApplicationTests.class'
+    finalizedBy jacocoTestReport
+    ignoreFailures = true
+}
+
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = true
+    }
 }
