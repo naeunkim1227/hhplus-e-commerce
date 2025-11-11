@@ -1,7 +1,9 @@
-package io.hhplus.ecommerce.cart.infrastructure;
+package io.hhplus.ecommerce.cart.infrastructure.inmemory;
 
 import io.hhplus.ecommerce.cart.domain.entity.CartItem;
 import io.hhplus.ecommerce.cart.domain.repository.CartRepository;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -9,6 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+@Repository
+@Profile("test")
 public class InMemoryCartRepository implements CartRepository {
 
     private final Map<Long, CartItem> store = new ConcurrentHashMap<>();

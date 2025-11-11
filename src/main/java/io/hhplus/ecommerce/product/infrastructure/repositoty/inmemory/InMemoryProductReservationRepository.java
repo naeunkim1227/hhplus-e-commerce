@@ -1,8 +1,10 @@
-package io.hhplus.ecommerce.product.infrastructure;
+package io.hhplus.ecommerce.product.infrastructure.repositoty.inmemory;
 
 import io.hhplus.ecommerce.product.domain.entity.ProductReservation;
 import io.hhplus.ecommerce.product.domain.entity.ProductReservationStatus;
 import io.hhplus.ecommerce.product.domain.repository.ProductReservationRepository;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,6 +17,8 @@ import java.util.stream.Collectors;
 /**
  * 상품 재고 선점 InMemory Repository
  */
+@Repository
+@Profile("test")
 public class InMemoryProductReservationRepository implements ProductReservationRepository {
 
     private final Map<Long, ProductReservation> store = new ConcurrentHashMap<>();

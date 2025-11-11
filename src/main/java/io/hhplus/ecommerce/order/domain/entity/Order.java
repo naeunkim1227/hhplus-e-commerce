@@ -1,6 +1,6 @@
 package io.hhplus.ecommerce.order.domain.entity;
 
-import io.hhplus.ecommerce.order.application.dto.command.OrderCreateFromCartCommand;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,10 +15,19 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
+@Table(name = "orders")
 public class Order {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private Long userId;
+
+    @Enumerated(EnumType.STRING)
     private OrderStatus status;
+
     private Long couponId;
     private BigDecimal totalAmount;
     private BigDecimal discountAmount;
@@ -26,6 +35,10 @@ public class Order {
     private LocalDateTime createdAt;
     private LocalDateTime orderedAt;
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<OrderItem> orderItems = new ArrayList<>();
 
     public static Order create(
             Long orderId,
@@ -45,6 +58,11 @@ public class Order {
                 .discountAmount(discountAmount)
                 .finalAmount(finalAmount)
                 .build();
+    }
+
+    public void addOrderItem(OrderItem item) {
+        item.setOrder(this);
+        this.orderItems.add(item);
     }
 
 

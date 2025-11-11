@@ -1,9 +1,7 @@
-package io.hhplus.ecommerce.user.infrastructure.repositoty;
+package io.hhplus.ecommerce.user.domain.repository;
 
 import io.hhplus.ecommerce.user.domain.entity.User;
-import org.springframework.context.annotation.Bean;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 

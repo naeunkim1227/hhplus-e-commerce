@@ -1,6 +1,7 @@
 package io.hhplus.ecommerce.cart.domain.entity;
 
 import io.hhplus.ecommerce.cart.application.dto.command.CartItemAddCommand;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,11 +9,15 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "cart_items")
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CartItem {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long userId;
     private Long productId;

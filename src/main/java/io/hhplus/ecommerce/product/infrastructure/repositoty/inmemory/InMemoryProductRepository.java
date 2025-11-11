@@ -1,13 +1,17 @@
-package io.hhplus.ecommerce.product.infrastructure;
+package io.hhplus.ecommerce.product.infrastructure.repositoty.inmemory;
 
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.repository.ProductRepository;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+@Repository
+@Profile("test")
 public class InMemoryProductRepository implements ProductRepository {
 
     private final Map<Long, Product> store = new ConcurrentHashMap<>();
@@ -38,6 +42,11 @@ public class InMemoryProductRepository implements ProductRepository {
             store.put(product.getId(), product);
             return product;
         }
+    }
+
+    @Override
+    public List<Product> findAllById(List<Long> productIds) {
+        return List.of();
     }
 
     @Override

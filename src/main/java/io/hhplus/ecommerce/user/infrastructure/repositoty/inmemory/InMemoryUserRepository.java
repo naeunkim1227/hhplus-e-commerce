@@ -1,14 +1,17 @@
-package io.hhplus.ecommerce.user.infrastructure;
+package io.hhplus.ecommerce.user.infrastructure.repositoty.inmemory;
 
-import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.user.domain.entity.User;
-import io.hhplus.ecommerce.user.infrastructure.repositoty.UserRepository;
+import io.hhplus.ecommerce.user.domain.repository.UserRepository;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+@Repository
+@Profile("test")
 public class InMemoryUserRepository implements UserRepository {
 
     private final Map<Long, User> store = new ConcurrentHashMap<>();

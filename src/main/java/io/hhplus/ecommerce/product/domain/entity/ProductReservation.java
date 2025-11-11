@@ -1,6 +1,7 @@
 package io.hhplus.ecommerce.product.domain.entity;
 
 import io.hhplus.ecommerce.product.domain.ProductPolicy;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,16 +13,22 @@ import java.time.LocalDateTime;
  * 상품 재고 선점 엔티티
  * 주문 시 재고를 임시로 선점하여 동시성 문제 해결
  */
+@Entity
+@Table(name = "product_reservations")
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductReservation {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long orderId;
     private Long productId;
     private int quantity;
+
+    @Enumerated(EnumType.STRING)
     private ProductReservationStatus status;
     private LocalDateTime expiredAt;    // 선점 만료 시간
     private LocalDateTime releasedAt;   // 선점 해제 시간

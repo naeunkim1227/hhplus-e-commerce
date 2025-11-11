@@ -1,7 +1,9 @@
-package io.hhplus.ecommerce.order.infrastructure;
+package io.hhplus.ecommerce.order.infrastructure.repositoty.inmemory;
 
 import io.hhplus.ecommerce.order.domain.entity.Order;
 import io.hhplus.ecommerce.order.domain.repository.OrderRepository;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -9,6 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+@Repository
+@Profile("test")
 public class InMemoryOrderRepository implements OrderRepository {
 
     private final Map<Long, Order> store = new ConcurrentHashMap<>();

@@ -1,13 +1,17 @@
-package io.hhplus.ecommerce.coupon.infrastructure;
+package io.hhplus.ecommerce.coupon.infrastructure.repositoty.inmemory;
 
 import io.hhplus.ecommerce.coupon.domain.entity.Coupon;
 import io.hhplus.ecommerce.coupon.domain.repository.CouponRepository;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+@Repository
+@Profile("test")
 public class InMemoryCouponRepository implements CouponRepository {
 
     private final Map<Long, Coupon> store = new ConcurrentHashMap<>();

@@ -4,6 +4,7 @@ import io.hhplus.ecommerce.common.exception.BusinessException;
 import io.hhplus.ecommerce.common.exception.CommonErrorCode;
 import io.hhplus.ecommerce.product.application.dto.command.ProductCreateCommand;
 import io.hhplus.ecommerce.product.domain.exception.ProductErrorCode;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,17 +13,25 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "products")
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Product {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private BigDecimal price;
     private Long stock;
+
+    @Enumerated(EnumType.STRING)
     private ProductStatus status;
+
+    @jakarta.persistence.Version
     private Long version;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

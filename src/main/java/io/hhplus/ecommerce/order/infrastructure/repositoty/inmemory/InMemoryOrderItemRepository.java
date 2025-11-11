@@ -1,7 +1,9 @@
-package io.hhplus.ecommerce.order.infrastructure;
+package io.hhplus.ecommerce.order.infrastructure.repositoty.inmemory;
 
 import io.hhplus.ecommerce.order.domain.entity.OrderItem;
 import io.hhplus.ecommerce.order.domain.repository.OrderItemRepository;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -9,6 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+@Repository
+@Profile("test")
 public class InMemoryOrderItemRepository implements OrderItemRepository {
 
     private final Map<Long, OrderItem> store = new ConcurrentHashMap<>();
@@ -22,13 +26,15 @@ public class InMemoryOrderItemRepository implements OrderItemRepository {
         if (orderItem.getId() == null) {
             // 신규 저장
             Long newId = idGenerator.getAndIncrement();
+            Long orderId = orderItem.getOrder() != null ? orderItem.getOrder().getId() : null;
             OrderItem newOrderItem = OrderItem.builder()
                     .id(newId)
-                    .orderId(orderItem.getOrderId())
+                    .orderId(orderId)
                     .productId(orderItem.getProductId())
                     .quantity(orderItem.getQuantity())
                     .price(orderItem.getPrice())
                     .createdAt(LocalDateTime.now())
+                    .order(orderItem.getOrder())
                     .build();
             store.put(newId, newOrderItem);
             return newOrderItem;
@@ -47,7 +53,8 @@ public class InMemoryOrderItemRepository implements OrderItemRepository {
     @Override
     public List<OrderItem> findByOrderId(Long orderId) {
         return store.values().stream()
-                .filter(orderItem -> orderItem.getOrderId().equals(orderId))
+                .filter(orderItem -> orderItem.getOrderId() != null
+                        && orderItem.getOrderId().equals(orderId))
                 .collect(Collectors.toList());
     }
 
