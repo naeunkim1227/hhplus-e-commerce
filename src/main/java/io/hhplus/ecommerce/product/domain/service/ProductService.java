@@ -64,11 +64,12 @@ public class ProductService {
     /**
      * 주문선점
      */
-    public ProductReservation reserveStock(Long orderId, Long productId, int quantity) {
-        ProductReservation reservation = ProductReservation.create(orderId, productId, quantity);
-        return reservationRepository.save(reservation);
+    public Product reserveStock(Long orderId, Long productId, int quantity) {
+        Product product = getProduct(productId);
+        ProductReservation.create(orderId, productId, quantity);
+        validate(product, quantity);
+        return productRepository.save(product);
     }
-
     /**
      * 재고 선점 확정 (주문 완료 시)
      * @param orderId 주문 ID

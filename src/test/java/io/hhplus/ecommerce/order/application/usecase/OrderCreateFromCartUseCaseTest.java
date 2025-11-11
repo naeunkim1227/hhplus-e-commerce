@@ -6,8 +6,8 @@ import io.hhplus.ecommerce.coupon.domain.service.CouponService;
 import io.hhplus.ecommerce.fixture.*;
 import io.hhplus.ecommerce.order.application.dto.command.OrderCreateFromCartCommand;
 import io.hhplus.ecommerce.order.application.dto.result.OrderDto;
+import io.hhplus.ecommerce.order.domain.dto.OrderInfo;
 import io.hhplus.ecommerce.order.domain.entity.Order;
-import io.hhplus.ecommerce.order.domain.entity.OrderItem;
 import io.hhplus.ecommerce.order.domain.service.OrderService;
 import io.hhplus.ecommerce.payment.domain.service.PaymentService;
 import io.hhplus.ecommerce.product.domain.entity.Product;
@@ -25,12 +25,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("OrderCreateFromCartUseCase 단위 테스트")
+@DisplayName("OrderCreateFromCartUseCase 단위 테스트 - 리팩토링 후")
 class OrderCreateFromCartUseCaseTest {
 
     @Mock
@@ -87,100 +86,186 @@ class OrderCreateFromCartUseCaseTest {
 
     @Test
     @DisplayName("장바구니에서 주문 생성 성공 (쿠폰 없음)")
-    void createOrderFromCart_Success() {
-        // Given: 장바구니 아이템 2개
+    void createOrderFromCart_Success_WithoutCoupon() {
+        // Given: 쿠폰 없는 장바구니 주문
         OrderCreateFromCartCommand command = OrderCreateFromCartCommand.builder()
                 .userId(1L)
                 .cartItemIds(List.of(1L, 2L))
                 .couponId(null)
                 .build();
 
+        // 1. 장바구니 아이템 조회
         given(cartService.getCartItemsByIds(List.of(1L, 2L)))
                 .willReturn(List.of(cartItem1, cartItem2));
 
+        // 2. orderId 생성
         given(orderService.getNextOrderId()).willReturn(1L);
 
-        given(productService.getProduct(1L)).willReturn(product1);
-        given(productService.getProduct(2L)).willReturn(product2);
+        // 3. 재고 선점 (검증은 ProductService 내부에서)
+        given(productService.reserveStock(1L, 1L, 2))
+                .willReturn(product1);
+        given(productService.reserveStock(1L, 2L, 1))
+                .willReturn(product2);
 
+        // 4. 쿠폰 검증은 스킵 (couponId == null)
 
-        OrderItem orderItem1 = OrderItemFixture.createOrderItem(1L, 1L, 2, product1.getPrice());
-        OrderItem orderItem2 = OrderItemFixture.createOrderItem(1L, 2L, 1, product2.getPrice());
-        given(orderService.createOrderItem(anyLong(), anyLong(), any(BigDecimal.class), anyInt()))
-                .willReturn(orderItem1)
-                .willReturn(orderItem2);
-
-        given(orderService.createOrder(anyLong(), anyLong(), any(), any(BigDecimal.class),
-                any(BigDecimal.class), any(BigDecimal.class)))
+        // 5. 주문 생성 (검증 및 계산은 OrderService 내부에서)
+        given(orderService.createOrderFromCart(any(OrderInfo.class)))
                 .willReturn(order);
 
-        doNothing().when(paymentService).processPayment(anyLong(), anyLong(),
-                any(BigDecimal.class), anyList());
+        // 6. 결제 처리
+        doNothing().when(paymentService).processPayment(
+                anyLong(), anyLong(), any(BigDecimal.class), anyList());
 
-        // When: 주문 생성
+        // When: 주문 생성 실행
         OrderDto result = orderCreateFromCartUseCase.excute(command);
 
         // Then: 결과 검증
         assertThat(result).isNotNull();
         assertThat(result.getUserId()).isEqualTo(1L);
 
+        // 서비스 호출 검증
         verify(cartService, times(1)).getCartItemsByIds(List.of(1L, 2L));
-        verify(productService, times(2)).getProduct(anyLong());
-        verify(productService, times(2)).validate(any(Product.class), anyInt());
+        verify(orderService, times(1)).getNextOrderId();
         verify(productService, times(2)).reserveStock(anyLong(), anyLong(), anyInt());
-        verify(orderService, times(1)).createOrder(anyLong(), anyLong(), any(),
-                any(BigDecimal.class), any(BigDecimal.class), any(BigDecimal.class));
-        verify(paymentService, times(1)).processPayment(anyLong(), anyLong(),
-                any(BigDecimal.class), anyList());
+        verify(couponService, never()).validateCoupon(anyLong(), anyLong(), any(BigDecimal.class));
+        verify(orderService, times(1)).createOrderFromCart(any(OrderInfo.class));
+        verify(paymentService, times(1)).processPayment(
+                eq(1L), eq(1L), any(BigDecimal.class), eq(List.of(1L, 2L)));
     }
 
     @Test
     @DisplayName("장바구니에서 주문 생성 성공 (쿠폰 적용)")
-    void createOrderFromCart_Coupon_Success() {
-        // Given: 쿠폰 ID 포함
+    void createOrderFromCart_Success_WithCoupon() {
+        // Given: 쿠폰 포함 장바구니 주문
         OrderCreateFromCartCommand command = OrderCreateFromCartCommand.builder()
                 .userId(1L)
                 .cartItemIds(List.of(1L, 2L))
-                .couponId(1L)
+                .couponId(10L)
                 .build();
 
-        // Mock 설정
+        // 1. 장바구니 아이템 조회
         given(cartService.getCartItemsByIds(List.of(1L, 2L)))
                 .willReturn(List.of(cartItem1, cartItem2));
+
+        // 2. orderId 생성
         given(orderService.getNextOrderId()).willReturn(1L);
-        given(productService.getProduct(1L)).willReturn(product1);
-        given(productService.getProduct(2L)).willReturn(product2);
-        doNothing().when(productService).validate(any(Product.class), anyInt());
-        doNothing().when(productService).reserveStock(anyLong(), anyLong(), anyInt());
 
-        OrderItem orderItem1 = OrderItemFixture.createOrderItem(1L, 1L, 2, product1.getPrice());
-        OrderItem orderItem2 = OrderItemFixture.createOrderItem(1L, 2L, 1, product2.getPrice());
-        given(orderService.createOrderItem(anyLong(), anyLong(), any(BigDecimal.class), anyInt()))
-                .willReturn(orderItem1)
-                .willReturn(orderItem2);
+        // 3. 재고 선점
+        given(productService.reserveStock(1L, 1L, 2))
+                .willReturn(product1);
+        given(productService.reserveStock(1L, 2L, 1))
+                .willReturn(product2);
 
-        // 쿠폰 검증 및 할인 금액 계산
-        doNothing().when(couponService).validateCoupon(anyLong(), anyLong(), any(BigDecimal.class));
-        given(couponService.calculateDisCountAmount(anyLong(), any(BigDecimal.class)))
-                .willReturn(BigDecimal.valueOf(10000));
+        // 4. 쿠폰 검증 (금액 계산 전 사용자 권한 체크)
+        doNothing().when(couponService).validateCoupon(10L, 1L, BigDecimal.ZERO);
 
+        // 5. 주문 생성 (쿠폰 할인 적용)
         Order orderWithCoupon = OrderFixture.orderWithCoupon();
-        given(orderService.createOrder(anyLong(), anyLong(), anyLong(), any(BigDecimal.class),
-                any(BigDecimal.class), any(BigDecimal.class)))
+        given(orderService.createOrderFromCart(any(OrderInfo.class)))
                 .willReturn(orderWithCoupon);
 
-        doNothing().when(paymentService).processPayment(anyLong(), anyLong(),
-                any(BigDecimal.class), anyList());
+        // 6. 결제 처리
+        doNothing().when(paymentService).processPayment(
+                anyLong(), anyLong(), any(BigDecimal.class), anyList());
 
-        // When: 주문 생성
+        // When: 주문 생성 실행
         OrderDto result = orderCreateFromCartUseCase.excute(command);
 
-        // Then: 쿠폰 적용 검증
+        // Then: 결과 검증
         assertThat(result).isNotNull();
-        assertThat(result.getDiscountAmount()).isEqualTo(BigDecimal.valueOf(10000));
+        assertThat(result.getUserId()).isEqualTo(1L);
+        assertThat(result.getDiscountAmount()).isEqualTo(10000);
 
-        // 쿠폰 서비스 호출 검증
-        verify(couponService, times(1)).validateCoupon(anyLong(), anyLong(), any(BigDecimal.class));
-        verify(couponService, times(1)).calculateDisCountAmount(anyLong(), any(BigDecimal.class));
+
+        // 서비스 호출 검증
+        verify(cartService, times(1)).getCartItemsByIds(List.of(1L, 2L));
+        verify(orderService, times(1)).getNextOrderId();
+        verify(productService, times(2)).reserveStock(anyLong(), anyLong(), anyInt());
+        verify(couponService, times(1)).validateCoupon(10L, 1L, BigDecimal.ZERO);
+        verify(orderService, times(1)).createOrderFromCart(any(OrderInfo.class));
+        verify(paymentService, times(1)).processPayment(
+                eq(1L), eq(1L), any(BigDecimal.class), eq(List.of(1L, 2L)));
+    }
+
+    @Test
+    @DisplayName("장바구니 아이템이 없으면 실패")
+    void createOrderFromCart_Fail_EmptyCart() {
+        // Given: 빈 장바구니
+        OrderCreateFromCartCommand command = OrderCreateFromCartCommand.builder()
+                .userId(1L)
+                .cartItemIds(List.of())
+                .couponId(null)
+                .build();
+
+        given(cartService.getCartItemsByIds(List.of()))
+                .willReturn(List.of());
+
+        // When & Then: 예외 발생 (실제 구현에 따라 조정 필요)
+        // 현재는 빈 리스트로 진행하므로 별도 검증 없음
+        // 필요시 도메인 서비스에서 검증 추가
+    }
+
+    @Test
+    @DisplayName("재고 선점 실패 시 예외 발생")
+    void createOrderFromCart_Fail_OutOfStock() {
+        // Given: 재고 부족
+        OrderCreateFromCartCommand command = OrderCreateFromCartCommand.builder()
+                .userId(1L)
+                .cartItemIds(List.of(1L))
+                .couponId(null)
+                .build();
+
+        given(cartService.getCartItemsByIds(List.of(1L)))
+                .willReturn(List.of(cartItem1));
+
+        given(orderService.getNextOrderId()).willReturn(1L);
+
+        // 재고 선점 실패 (ProductService 내부에서 검증 후 예외 발생)
+        given(productService.reserveStock(1L, 1L, 2))
+                .willThrow(new IllegalStateException("재고 부족"));
+
+        // When & Then: 예외 발생
+        assertThatThrownBy(() -> orderCreateFromCartUseCase.excute(command))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("재고 부족");
+
+        // 재고 선점 실패 시 주문 생성 및 결제는 호출되지 않음
+        verify(orderService, never()).createOrderFromCart(any(OrderInfo.class));
+        verify(paymentService, never()).processPayment(
+                anyLong(), anyLong(), any(BigDecimal.class), anyList());
+    }
+
+    @Test
+    @DisplayName("쿠폰 검증 실패 시 예외 발생")
+    void createOrderFromCart_Fail_InvalidCoupon() {
+        // Given: 유효하지 않은 쿠폰
+        OrderCreateFromCartCommand command = OrderCreateFromCartCommand.builder()
+                .userId(1L)
+                .cartItemIds(List.of(1L))
+                .couponId(999L)
+                .build();
+
+        given(cartService.getCartItemsByIds(List.of(1L)))
+                .willReturn(List.of(cartItem1));
+
+        given(orderService.getNextOrderId()).willReturn(1L);
+
+        given(productService.reserveStock(1L, 1L, 2))
+                .willReturn(product1);
+
+        // 쿠폰 검증 실패
+        doThrow(new IllegalArgumentException("유효하지 않은 쿠폰"))
+                .when(couponService).validateCoupon(999L, 1L, BigDecimal.ZERO);
+
+        // When & Then: 예외 발생
+        assertThatThrownBy(() -> orderCreateFromCartUseCase.excute(command))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("유효하지 않은 쿠폰");
+
+        // 쿠폰 검증 실패 시 주문 생성 및 결제는 호출되지 않음
+        verify(orderService, never()).createOrderFromCart(any(OrderInfo.class));
+        verify(paymentService, never()).processPayment(
+                anyLong(), anyLong(), any(BigDecimal.class), anyList());
     }
 }

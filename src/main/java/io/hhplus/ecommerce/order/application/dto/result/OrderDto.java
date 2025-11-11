@@ -25,7 +25,6 @@ public class OrderDto {
     private Double totalAmount;
     private Double discountAmount;
     private Double finalAmount;
-    private Long version;
     private Long createdAt;
     private Long updatedAt;
     private List<OrderItemDto> orderItems;
@@ -42,6 +41,20 @@ public class OrderDto {
                 .orderItems(orderItems.stream()
                         .map(OrderItemDto::from)
                         .toList())
+                .build();
+    }
+
+
+    public static OrderDto from(Order order) {
+        return OrderDto.builder()
+                .id(order.getId())
+                .userId(order.getUserId())
+                .status(order.getStatus() != null ? order.getStatus().name() : null)
+                .couponId(order.getCouponId())
+                .totalAmount(order.getTotalAmount() != null ? order.getTotalAmount().doubleValue() : null)
+                .discountAmount(order.getDiscountAmount() != null ? order.getDiscountAmount().doubleValue() : null)
+                .finalAmount(order.getFinalAmount() != null ? order.getFinalAmount().doubleValue() : null)
+                .orderItems(null) // 아예 안채움
                 .build();
     }
 }

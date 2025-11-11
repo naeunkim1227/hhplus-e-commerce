@@ -3,7 +3,6 @@ package io.hhplus.ecommerce.payment.domain.service;
 import io.hhplus.ecommerce.payment.domain.event.PaymentFailureEvent;
 import io.hhplus.ecommerce.payment.domain.event.PaymentSuccessEvent;
 import io.hhplus.ecommerce.user.domain.service.UserService;
-import io.hhplus.ecommerce.user.infrastructure.repositoty.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;

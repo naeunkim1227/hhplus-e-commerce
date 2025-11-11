@@ -1,6 +1,8 @@
 package io.hhplus.ecommerce.order.presentation.dto.response;
 
 import io.hhplus.ecommerce.order.application.dto.result.OrderDto;
+import io.hhplus.ecommerce.order.application.dto.result.OrderItemDto;
+import io.hhplus.ecommerce.order.domain.entity.OrderItem;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,12 +28,15 @@ public class OrderResponse {
     private BigDecimal discountAmount;
     private BigDecimal finalAmount;
     private LocalDateTime orderedAt;
+    private List<OrderItemDto> items;
+
 
     public static OrderResponse from(OrderDto dto) {
         return OrderResponse.builder()
                 .id(dto.getId())
                 .userId(dto.getUserId())
                 .couponId(dto.getCouponId())
+                .items(dto.getOrderItems())
                 .build();
     }
 }

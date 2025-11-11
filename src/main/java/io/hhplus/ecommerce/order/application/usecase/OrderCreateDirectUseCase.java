@@ -1,6 +1,5 @@
 package io.hhplus.ecommerce.order.application.usecase;
 
-import io.hhplus.ecommerce.cart.domain.service.CartService;
 import io.hhplus.ecommerce.coupon.domain.service.CouponService;
 import io.hhplus.ecommerce.order.application.dto.command.OrderCreateDirectCommand;
 import io.hhplus.ecommerce.order.application.dto.result.OrderDto;
@@ -43,8 +42,8 @@ public class OrderCreateDirectUseCase {
         Order order = orderService.createOrder(orderId ,command.getUserId(),command.getCouponId()
                 , totalAmount, discountAmount, finalAmount);
 
-        OrderItem orderItem = orderService.createOrderItem(orderId,command.getProductId(),
-                product.getPrice(),command.getQuantity());
+        OrderItem orderItem = orderService.createOrderItem(command.getProductId(),
+                product.getPrice(), command.getQuantity());
 
         List<OrderItem> orderItems = List.of(orderItem);
         orderItems.add(orderItem);
