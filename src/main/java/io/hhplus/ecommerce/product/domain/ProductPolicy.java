@@ -22,5 +22,7 @@ public final class ProductPolicy {
     //재고 선점 시간
     public static final int RESERVATION_MINUTES = 10;
 
+    //최대 검색 기간
+    public static final int MAX_SEARCH_DAY = 100;
 
 }

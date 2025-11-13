@@ -6,7 +6,9 @@ import io.hhplus.ecommerce.product.application.dto.command.ProductCreateCommand;
 import io.hhplus.ecommerce.product.application.usecase.ProductCreateUseCase;
 import io.hhplus.ecommerce.product.application.usecase.ProductListUseCase;
 import io.hhplus.ecommerce.product.application.usecase.ProductGetUseCase;
+import io.hhplus.ecommerce.product.application.usecase.ProductPopularUseCase;
 import io.hhplus.ecommerce.product.presentation.dto.request.ProductCreateRequest;
+import io.hhplus.ecommerce.product.presentation.dto.request.ProductPopularRequest;
 import io.hhplus.ecommerce.product.presentation.dto.request.ProductSearchRequest;
 import io.hhplus.ecommerce.product.presentation.dto.response.ProductResponse;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,6 +31,7 @@ public class ProductController {
     private final ProductGetUseCase productGetUseCase;
     private final ProductListUseCase productListUseCase;
     private final ProductCreateUseCase productCreateUseCase;
+    private final ProductPopularUseCase productPopularUseCase;
 
     /**
      *  상품 목록 조회
@@ -60,5 +63,13 @@ public class ProductController {
     public CommonResponse createProduct(@RequestBody @Valid ProductCreateRequest request) {
         ProductDto dto  = productCreateUseCase.execute(request.toCommand());
         return CommonResponse.success(ProductResponse.from(dto));
+    }
+
+    @GetMapping("/popular")
+    public CommonResponse getPopularProduct(@RequestBody @Valid ProductPopularRequest request) {
+        List<ProductResponse> products = productPopularUseCase.execute(request.toCommand()).stream()
+                .map(ProductResponse::from)
+                .toList();
+        return CommonResponse.success(products);
     }
 }

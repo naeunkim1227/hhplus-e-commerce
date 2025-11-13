@@ -50,6 +50,11 @@ public class InMemoryProductRepository implements ProductRepository {
     }
 
     @Override
+    public List<Product> findPopularProducts(LocalDateTime startDate, int limit) {
+        return List.of();
+    }
+
+    @Override
     public Optional<Product> findById(Long id) {
         return Optional.ofNullable(store.get(id));
     }

@@ -26,7 +26,8 @@ public enum ProductErrorCode implements ErrorCode {
 
 
     // 409 Conflict
-    INSUFFICIENT_STOCK(HttpStatus.CONFLICT, "INSUFFICIENT_STOCK", "재고가 부족합니다");
+    INSUFFICIENT_STOCK(HttpStatus.CONFLICT, "INSUFFICIENT_STOCK", "재고가 부족합니다"),
+    SEARCH_CONDITION_LIMIT(HttpStatus.CONFLICT, "SEARCH_CONDITION_LIMIT", "최대 검색기간을 초과하였습니다.");
 
     private final HttpStatus status;
     private final String code;

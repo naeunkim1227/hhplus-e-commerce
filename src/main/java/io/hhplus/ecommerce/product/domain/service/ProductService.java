@@ -2,6 +2,7 @@ package io.hhplus.ecommerce.product.domain.service;
 
 import io.hhplus.ecommerce.common.exception.BusinessException;
 import io.hhplus.ecommerce.product.application.dto.command.ProductCreateCommand;
+import io.hhplus.ecommerce.product.application.dto.command.ProductPopularCommand;
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.entity.ProductReservation;
 import io.hhplus.ecommerce.product.domain.entity.ProductReservationStatus;
@@ -12,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -29,6 +31,7 @@ public class ProductService {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ProductErrorCode.PRODUCT_NOT_FOUND));
     }
+
     public void validate(Product product, int quantity){
         Long reservedQuantity = productReservationRepository.getTotalReservedQuantity(product.getId());
         if((reservedQuantity + product.getStock()) - quantity <  0){
@@ -52,6 +55,16 @@ public class ProductService {
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
+
+
+    /**
+     * 최근 N일 동안 가장 판매량이 많은 상품 조회
+     */
+    public List<Product> getPopularProducts(@Valid ProductPopularCommand command) {
+        LocalDateTime startDate = java.time.LocalDateTime.now().minusDays(command.getDays());
+        return productRepository.findPopularProducts(startDate, command.getLimit());
+    }
+
 
     /**
      * 상품 생성

@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,5 +36,10 @@ public class ProductRepositoryAdapter implements ProductRepository {
     @Override
     public List<Product> findAllById(List<Long> productIds) {
         return jpaRepository.findAllById(productIds);
+    }
+
+    @Override
+    public List<Product> findPopularProducts(LocalDateTime startDate, int limit) {
+        return jpaRepository.findPopularProducts(startDate, limit);
     }
 }
