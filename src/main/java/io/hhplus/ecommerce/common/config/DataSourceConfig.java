@@ -14,7 +14,7 @@ public class DataSourceConfig {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
         dataSource.setUrl(System.getenv("DB_URL") != null ?
-                System.getenv("DB_URL") : "jdbc:mysql://localhost:3306/ecommerce");
+                System.getenv("DB_URL") : "jdbc:mysql://localhost:3306/ecommerce?characterEncoding=UTF-8&serverTimezone=Asia/Seoul");
         dataSource.setUsername(System.getenv("DB_USER") != null ?
                 System.getenv("DB_USER") : "ecommerce_user");
         dataSource.setPassword(System.getenv("DB_PASSWORD") != null ?
