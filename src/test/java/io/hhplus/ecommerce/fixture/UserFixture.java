@@ -18,7 +18,6 @@ public class UserFixture {
      */
     public static User defaultUser() {
         return User.builder()
-                .id(1L)
                 .name("김뿌꾸")
                 .balance(BigDecimal.valueOf(1000000))
                 .createdAt(DEFAULT_TIMESTAMP)
@@ -26,12 +25,13 @@ public class UserFixture {
                 .build();
     }
 
+
     /**
      * 잔액이 적은 사용자
+     * ID는 null로 설정하여 JPA가 자동 생성하도록 함
      */
     public static User lowBalanceUser() {
         return User.builder()
-                .id(2L)
                 .name("이두치")
                 .balance(BigDecimal.valueOf(1000))
                 .createdAt(DEFAULT_TIMESTAMP)
@@ -41,10 +41,10 @@ public class UserFixture {
 
     /**
      * 잔액이 없는 사용자 생성
+     * ID는 null로 설정하여 JPA가 자동 생성하도록 함
      */
     public static User noBalanceUser() {
         return User.builder()
-                .id(3L)
                 .name("하뿌꾸")
                 .balance(BigDecimal.ZERO)
                 .createdAt(DEFAULT_TIMESTAMP)

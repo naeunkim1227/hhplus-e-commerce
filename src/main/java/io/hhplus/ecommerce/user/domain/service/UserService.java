@@ -5,7 +5,7 @@ import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.user.application.dto.command.UserCreateCommand;
 import io.hhplus.ecommerce.user.domain.entity.User;
 import io.hhplus.ecommerce.user.domain.exception.UserErrorCode;
-import io.hhplus.ecommerce.user.infrastructure.repositoty.UserRepository;
+import io.hhplus.ecommerce.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

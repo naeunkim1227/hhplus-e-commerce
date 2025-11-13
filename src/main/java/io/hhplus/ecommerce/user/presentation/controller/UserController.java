@@ -3,9 +3,9 @@ package io.hhplus.ecommerce.user.presentation.controller;
 import io.hhplus.ecommerce.common.response.CommonResponse;
 import io.hhplus.ecommerce.user.application.dto.result.UserDto;
 import io.hhplus.ecommerce.user.application.usecase.UserCreateUseCase;
-import io.hhplus.ecommerce.user.domain.entity.User;
 import io.hhplus.ecommerce.user.presentation.dto.request.UserCreateRequest;
 import io.hhplus.ecommerce.user.presentation.dto.response.UserResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +24,9 @@ public class UserController {
 
     private final UserCreateUseCase userCreateUseCase;
 
+    @Operation(summary = "유저 생성", description = "유저를 생성합니다.")
     @GetMapping
-    public CommonResponse<UserResponse> joinUser(@Valid @ModelAttribute UserCreateRequest request){
+    public CommonResponse<UserResponse> createUser(@Valid @ModelAttribute UserCreateRequest request){
         UserDto userDto = userCreateUseCase.execute(request.toCommand());
         return CommonResponse.success(UserResponse.from(userDto));
     }
