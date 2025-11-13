@@ -39,8 +39,8 @@ erDiagram
 
     CART_ITEM {
         bigint id PK
-        bigint user_id FK
-        bigint product_id FK
+        bigint user_id 
+        bigint product_id 
         int quantity
         datetime created_at "NOT NULL, DEFAULT now()"
         datetime updated_at "NOT NULL, DEFAULT now()"
@@ -48,9 +48,9 @@ erDiagram
 
     ORDER {
         bigint id PK
-        bigint user_id FK
+        bigint user_id 
         varchar(100) status "PENDING/PAYMENT_COMPLETED/PREPARING/SHIPPING/DELIVERED/CANCELLED"
-        bigint coupon_id FK
+        bigint coupon_id 
         decimal(15_2) total_amount
         decimal(15_2) discount_amount
         decimal(15_2) final_amount
@@ -61,8 +61,8 @@ erDiagram
 
     ORDER_ITEM {
         bigint id PK
-        bigint order_id FK
-        bigint product_id FK
+        bigint order_id 
+        bigint product_id 
         int quantity
         decimal(15_2) price
         datetime created_at "NOT NULL, DEFAULT now()"
@@ -85,8 +85,8 @@ erDiagram
 
     USER_COUPON {
         bigint id PK
-        bigint user_id FK "NOT NULL"
-        bigint coupon_id FK
+        bigint user_id  "NOT NULL"
+        bigint coupon_id 
         bigint status 
         datetime issued_at
         datetime used_at    
@@ -95,7 +95,7 @@ erDiagram
 
     POINT_HISTORY {
         bigint id PK
-        bigint user_id FK
+        bigint user_id 
         varchar type "EARNED/USED/EXPIRED/REFUNDED"
         decimal(15_2) amount
         datetime created_at "NOT NULL, DEFAULT now()"
@@ -104,8 +104,8 @@ erDiagram
 
     PRODUCT_RESERVATION {
         bigint id PK
-        bigint order_id FK "NOT NULL"
-        bigint product_id FK "NOT NULL"
+        bigint order_id  "NOT NULL"
+        bigint product_id  "NOT NULL"
         int stock "NOT NULL"
         varchar(20) status "NOT NULL, RESERVED/CONFIRMED/RELEASED/EXPIRED"
         datetime reserved_at "NOT NULL, DEFAULT now()"
@@ -137,7 +137,6 @@ CREATE TABLE `product` (
                            `name` varchar(100) NOT NULL,
                            `price` decimal(15,2) NOT NULL,
                            `stock` bigint,
-  
                            `status` varchar(255),
                            `version` bigint NOT NULL,
                            `created_at` datetime NOT NULL DEFAULT (now()),
@@ -235,8 +234,6 @@ CREATE INDEX `idx_stock_reservation_order` ON `product_reservation` (`order_id`)
 CREATE INDEX `idx_stock_reservation_product` ON `product_reservation` (`product_id`);
 
 CREATE INDEX `idx_stock_reservation_product_status` ON `product_reservation` (`product_id`, `status`);
-
-CREATE INDEX `idx_stock_reservation_expired` ON `product_reservation` (`expired_at`);
 
 ALTER TABLE `product` COMMENT = 'Status values:
 - ACTIVE: 판매 중
