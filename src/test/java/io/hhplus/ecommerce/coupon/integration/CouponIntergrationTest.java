@@ -48,7 +48,6 @@ public class CouponIntergrationTest {
     private Coupon testCoupon;
 
     AtomicInteger successCount = new AtomicInteger(0);
-    AtomicInteger failCount = new AtomicInteger(0);
 
     @BeforeEach
     void setUp() {
@@ -112,11 +111,8 @@ public class CouponIntergrationTest {
             return created.getId();
         });
 
-        System.out.println("쿠폰을 만들어쪄용" + couponId);
-
         // 저장된 쿠폰 확인
         Optional<Coupon> check = couponRepository.findById(couponId);
-        System.out.println("저장된 쿠폰 조회 결과: " + (check.isPresent() ? "존재 (ID: " + check.get().getId() + ")" : "없음"));
 
         int threadCount = 100;
 
@@ -139,12 +135,6 @@ public class CouponIntergrationTest {
         // then
         Coupon result = couponRepository.findById(couponId).orElseThrow();
 
-        System.out.println("=== 테스트 결과 ===");
-        System.out.println("성공 수: " + successCount.get());
-        System.out.println("실패 수: " + failCount.get());
-        System.out.println("최종 발급 수량: " + result.getIssuedQuantity());
-        System.out.println("최종 버전: " + result.getVersion());
-
         Assertions.assertAll(
                 "선착순 쿠폰 검증",
                 () -> assertThat(successCount.get()).isEqualTo(issuedCoupontCount),
@@ -160,7 +150,6 @@ public class CouponIntergrationTest {
             try {
                 couponIssueUseCase.execute(userId, couponId);
                 successCount.incrementAndGet();
-                System.out.println("~~~발급 받았슨~~~");
                 issued = true;
             }catch (ObjectOptimisticLockingFailureException e) {
                 try {
@@ -168,7 +157,6 @@ public class CouponIntergrationTest {
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
-                System.out.println("~~~~다시 츄라이함용~~~");
                 retryIssueCoupon(userId, couponId ,false, tryCount + 1);
             }
         }
