@@ -1,0 +1,178 @@
+package io.hhplus.ecommerce.coupon.integration;
+
+
+import io.hhplus.ecommerce.config.TestContainerConfig;
+import io.hhplus.ecommerce.coupon.application.usecase.CouponIssueUseCase;
+import io.hhplus.ecommerce.coupon.domain.entity.Coupon;
+import io.hhplus.ecommerce.coupon.domain.entity.CouponStatus;
+import io.hhplus.ecommerce.coupon.domain.entity.CouponType;
+import io.hhplus.ecommerce.coupon.infrastructure.repositoty.jpa.JpaCouponRepository;
+import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.util.concurrent.Executors.newFixedThreadPool;
+import static org.assertj.core.api.Assertions.*;
+
+
+@SpringBootTest
+@Import(TestContainerConfig.class)
+@DisplayName("Coupon 통합 테스트 - UseCase + Service + Repository + DB")
+public class CouponIntergrationTest {
+
+    @Autowired
+    private CouponIssueUseCase couponIssueUseCase;
+
+    @Autowired
+    private JpaCouponRepository couponRepository;
+
+    @Autowired
+    private EntityManager entityManager;
+
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
+    private Coupon testCoupon;
+
+    AtomicInteger successCount = new AtomicInteger(0);
+    AtomicInteger failCount = new AtomicInteger(0);
+
+    @BeforeEach
+    void setUp() {
+        couponRepository.deleteAll();
+    }
+
+    @Test
+    @DisplayName("쿠폰을 생성하고 조회한다")
+    void createAndGetCoupon() {
+        testCoupon = Coupon.builder()
+                .code("TEST")
+                .name("동시")
+                .totalQuantity(10)
+                .issuedQuantity(0)
+                .startDate(LocalDateTime.now().minusDays(1))
+                .endDate(LocalDateTime.now().plusDays(30))
+                .status(CouponStatus.ACTIVE)
+                .type(CouponType.RATE)
+                .discountRate(new BigDecimal("0.10"))
+                .version(0L)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+        Coupon createCoupon =  couponRepository.save(testCoupon);
+        couponRepository.flush();
+
+        Optional<Coupon> savedCoupon = couponRepository.findById(createCoupon.getId());
+
+        Assertions.assertAll(
+                "쿠폰 생성 후 조회",
+            () -> assertThat(savedCoupon).isNotNull(),
+            () -> assertThat(savedCoupon.get().getId()).isEqualTo(createCoupon.getId())
+        );
+    }
+
+
+    @Test
+    @DisplayName("선착순 쿠폰을 발급한다 - 낙관적 락을 사용하여 100명이 동시에 요청했을때 10명만 성공한다.")
+    void issueCouponConcurrency() throws InterruptedException {
+        // given: 별도 트랜잭션으로 쿠폰 저장하여 커밋 보장
+        int issuedCoupontCount = 10;
+
+        testCoupon = Coupon.builder()
+                .code("TEST")
+                .name("동시2")
+                .totalQuantity(issuedCoupontCount)
+                .issuedQuantity(0)
+                .startDate(LocalDateTime.now().minusDays(1))
+                .endDate(LocalDateTime.now().plusDays(30))
+                .status(CouponStatus.ACTIVE)
+                .type(CouponType.RATE)
+                .discountRate(new BigDecimal("0.10"))
+                .version(0L)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        // 별도 트랜잭션으로 쿠폰 저장 (커밋 보장)
+        Long couponId = transactionTemplate.execute(status -> {
+            Coupon created = couponRepository.save(testCoupon);
+            return created.getId();
+        });
+
+        System.out.println("쿠폰을 만들어쪄용" + couponId);
+
+        // 저장된 쿠폰 확인
+        Optional<Coupon> check = couponRepository.findById(couponId);
+        System.out.println("저장된 쿠폰 조회 결과: " + (check.isPresent() ? "존재 (ID: " + check.get().getId() + ")" : "없음"));
+
+        int threadCount = 100;
+
+        ExecutorService executorService = newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        // when: 100명이 동시에 쿠폰 발급 요청 (재시도 로직 포함)
+        for (int i = 0; i < threadCount; i++) {
+            long userId = i + 1;
+            executorService.submit(() -> {
+                boolean issued = false;
+                retryIssueCoupon(userId, couponId, issued, 0);
+                latch.countDown();
+            });
+        }
+
+        latch.await();
+        executorService.shutdown();
+
+        // then
+        Coupon result = couponRepository.findById(couponId).orElseThrow();
+
+        System.out.println("=== 테스트 결과 ===");
+        System.out.println("성공 수: " + successCount.get());
+        System.out.println("실패 수: " + failCount.get());
+        System.out.println("최종 발급 수량: " + result.getIssuedQuantity());
+        System.out.println("최종 버전: " + result.getVersion());
+
+        Assertions.assertAll(
+                "선착순 쿠폰 검증",
+                () -> assertThat(successCount.get()).isEqualTo(issuedCoupontCount),
+                () -> assertThat(result.getIssuedQuantity()).isEqualTo(issuedCoupontCount),
+                () -> assertThat(result.getVersion()).isEqualTo(10)
+        );
+    }
+
+    private void retryIssueCoupon(Long userId, Long couponId, boolean issued, int tryCount) {
+        int maxRetries = 5;
+
+        if(!issued && tryCount < maxRetries){
+            try {
+                couponIssueUseCase.execute(userId, couponId);
+                successCount.incrementAndGet();
+                System.out.println("~~~발급 받았슨~~~");
+                issued = true;
+            }catch (ObjectOptimisticLockingFailureException e) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+                System.out.println("~~~~다시 츄라이함용~~~");
+                retryIssueCoupon(userId, couponId ,false, tryCount + 1);
+            }
+        }
+    }
+
+
+}

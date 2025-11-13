@@ -3,6 +3,7 @@ package io.hhplus.ecommerce.fixture;
 import io.hhplus.ecommerce.coupon.domain.entity.Coupon;
 import io.hhplus.ecommerce.coupon.domain.entity.CouponStatus;
 import io.hhplus.ecommerce.coupon.domain.entity.CouponType;
+import io.hhplus.ecommerce.coupon.domain.entity.UserCoupon;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,10 +17,10 @@ public class CouponFixture {
 
     /**
      * 기본 쿠폰 생성 (10% 할인)
+     * ID는 null로 설정하여 JPA가 자동 생성하도록 함
      */
     public static Coupon defaultCoupon() {
         return Coupon.builder()
-                .id(1L)
                 .code("COUPON10")
                 .name("10% 할인 쿠폰")
                 .totalQuantity(100)
@@ -35,12 +36,14 @@ public class CouponFixture {
                 .build();
     }
 
+
+
     /**
      * 품절된 쿠폰
+     * ID는 null로 설정하여 JPA가 자동 생성하도록 함
      */
     public static Coupon soldOutCoupon() {
         return Coupon.builder()
-                .id(2L)
                 .code("SOLDOUT")
                 .name("품절 쿠폰")
                 .totalQuantity(100)
@@ -58,10 +61,10 @@ public class CouponFixture {
 
     /**
      * 만료된 쿠폰
+     * ID는 null로 설정하여 JPA가 자동 생성하도록 함
      */
     public static Coupon expiredCoupon() {
         return Coupon.builder()
-                .id(3L)
                 .code("EXPIRED")
                 .name("만료 쿠폰")
                 .totalQuantity(100)
