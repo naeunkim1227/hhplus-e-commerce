@@ -12,10 +12,10 @@ public class ProductFixture {
 
     /**
      * 기본 상품 (ACTIVE, 재고 충분)
+     * ID는 null로 설정하여 JPA가 자동 생성하도록 함
      */
     public static Product defaultProduct() {
         return Product.builder()
-                .id(1L)
                 .name("프레첼")
                 .price(new BigDecimal("129000"))
                 .stock(150L)
@@ -28,10 +28,10 @@ public class ProductFixture {
 
     /**
      * 재고 부족 상품
+     * ID는 null로 설정하여 JPA가 자동 생성하도록 함
      */
     public static Product outOfStockProduct() {
         return Product.builder()
-                .id(2L)
                 .name("아메리카노")
                 .price(new BigDecimal("4500"))
                 .stock(0L)
@@ -44,10 +44,10 @@ public class ProductFixture {
 
     /**
      * 판매 중지 상품
+     * ID는 null로 설정하여 JPA가 자동 생성하도록 함
      */
     public static Product inactiveProduct() {
         return Product.builder()
-                .id(3L)
                 .name("에어팟")
                 .price(new BigDecimal("350000"))
                 .stock(200L)
