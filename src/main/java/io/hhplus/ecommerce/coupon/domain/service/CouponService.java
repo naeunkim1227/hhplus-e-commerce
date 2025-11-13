@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Service
@@ -43,7 +44,7 @@ public class CouponService {
         Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(() -> new BusinessException(CouponErrorCode.COUPON_NOT_FOUND));
         UserCoupon userCoupon = userCouponRepository.findByUserIdAndCouponId(userId, couponId)
-                .orElseThrow(() -> new BusinessException(CouponErrorCode.COUPON_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(CouponErrorCode.USER_COUPON_NOT_FOUND));
         couponValidator.validate(coupon, userCoupon, amount);
     }
 
@@ -56,7 +57,8 @@ public class CouponService {
         BigDecimal discountAmount = BigDecimal.ZERO;
 
         switch (coupon.getType()) {
-            case RATE ->  discountAmount = totalAmount.multiply(coupon.getDiscountRate());
+            case RATE ->  discountAmount = totalAmount.multiply(coupon.getDiscountRate())
+                    .divide(BigDecimal.valueOf(100), RoundingMode.DOWN);
             case FIXED -> discountAmount = totalAmount.subtract(coupon.getDiscountRate());
         }
         return discountAmount;

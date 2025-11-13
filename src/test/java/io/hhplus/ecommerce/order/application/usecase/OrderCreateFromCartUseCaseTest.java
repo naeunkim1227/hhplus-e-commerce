@@ -101,15 +101,13 @@ class OrderCreateFromCartUseCaseTest {
         // 2. orderId 생성
         given(orderService.getNextOrderId()).willReturn(1L);
 
-        // 3. 재고 선점 (검증은 ProductService 내부에서)
+        // 3. 재고 선점
         given(productService.reserveStock(1L, 1L, 2))
                 .willReturn(product1);
         given(productService.reserveStock(1L, 2L, 1))
                 .willReturn(product2);
 
-        // 4. 쿠폰 검증은 스킵 (couponId == null)
-
-        // 5. 주문 생성 (검증 및 계산은 OrderService 내부에서)
+        // 5. 주문 생성
         given(orderService.createOrderFromCart(any(OrderInfo.class)))
                 .willReturn(order);
 
@@ -200,10 +198,6 @@ class OrderCreateFromCartUseCaseTest {
 
         given(cartService.getCartItemsByIds(List.of()))
                 .willReturn(List.of());
-
-        // When & Then: 예외 발생 (실제 구현에 따라 조정 필요)
-        // 현재는 빈 리스트로 진행하므로 별도 검증 없음
-        // 필요시 도메인 서비스에서 검증 추가
     }
 
     @Test
@@ -236,36 +230,5 @@ class OrderCreateFromCartUseCaseTest {
                 anyLong(), anyLong(), any(BigDecimal.class), anyList());
     }
 
-    @Test
-    @DisplayName("쿠폰 검증 실패 시 예외 발생")
-    void createOrderFromCart_Fail_InvalidCoupon() {
-        // Given: 유효하지 않은 쿠폰
-        OrderCreateFromCartCommand command = OrderCreateFromCartCommand.builder()
-                .userId(1L)
-                .cartItemIds(List.of(1L))
-                .couponId(999L)
-                .build();
 
-        given(cartService.getCartItemsByIds(List.of(1L)))
-                .willReturn(List.of(cartItem1));
-
-        given(orderService.getNextOrderId()).willReturn(1L);
-
-        given(productService.reserveStock(1L, 1L, 2))
-                .willReturn(product1);
-
-        // 쿠폰 검증 실패
-        doThrow(new IllegalArgumentException("유효하지 않은 쿠폰"))
-                .when(couponService).validateCoupon(999L, 1L, BigDecimal.ZERO);
-
-        // When & Then: 예외 발생
-        assertThatThrownBy(() -> orderCreateFromCartUseCase.excute(command))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("유효하지 않은 쿠폰");
-
-        // 쿠폰 검증 실패 시 주문 생성 및 결제는 호출되지 않음
-        verify(orderService, never()).createOrderFromCart(any(OrderInfo.class));
-        verify(paymentService, never()).processPayment(
-                anyLong(), anyLong(), any(BigDecimal.class), anyList());
-    }
 }

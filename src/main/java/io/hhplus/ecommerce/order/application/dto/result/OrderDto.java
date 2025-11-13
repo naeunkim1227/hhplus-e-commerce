@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -22,9 +23,9 @@ public class OrderDto {
     private Long userId;
     private String status;
     private Long couponId;
-    private Double totalAmount;
-    private Double discountAmount;
-    private Double finalAmount;
+    private BigDecimal totalAmount;
+    private BigDecimal discountAmount;
+    private BigDecimal finalAmount;
     private Long createdAt;
     private Long updatedAt;
     private List<OrderItemDto> orderItems;
@@ -35,9 +36,9 @@ public class OrderDto {
                 .userId(order.getUserId())
                 .status(order.getStatus() != null ? order.getStatus().name() : null)
                 .couponId(order.getCouponId())
-                .totalAmount(order.getTotalAmount() != null ? order.getTotalAmount().doubleValue() : null)
-                .discountAmount(order.getDiscountAmount() != null ? order.getDiscountAmount().doubleValue() : null)
-                .finalAmount(order.getFinalAmount() != null ? order.getFinalAmount().doubleValue() : null)
+                .totalAmount(order.getTotalAmount())
+                .discountAmount(order.getDiscountAmount())
+                .finalAmount(order.getFinalAmount())
                 .orderItems(orderItems.stream()
                         .map(OrderItemDto::from)
                         .toList())
@@ -51,9 +52,9 @@ public class OrderDto {
                 .userId(order.getUserId())
                 .status(order.getStatus() != null ? order.getStatus().name() : null)
                 .couponId(order.getCouponId())
-                .totalAmount(order.getTotalAmount() != null ? order.getTotalAmount().doubleValue() : null)
-                .discountAmount(order.getDiscountAmount() != null ? order.getDiscountAmount().doubleValue() : null)
-                .finalAmount(order.getFinalAmount() != null ? order.getFinalAmount().doubleValue() : null)
+                .totalAmount(order.getTotalAmount())
+                .discountAmount(order.getDiscountAmount())
+                .finalAmount(order.getFinalAmount())
                 .orderItems(null) // 아예 안채움
                 .build();
     }

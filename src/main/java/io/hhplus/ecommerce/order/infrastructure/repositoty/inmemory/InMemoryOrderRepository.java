@@ -69,4 +69,14 @@ public class InMemoryOrderRepository implements OrderRepository {
         return new ArrayList<>(store.values());
     }
 
+    @Override
+    public Optional<Order> findByIdWithOrderItems(Long orderId) {
+        return Optional.empty();
+    }
+
+    @Override
+    public List<Order> findByUserIdWithOrderItems(Long userId) {
+        return List.of();
+    }
+
 }

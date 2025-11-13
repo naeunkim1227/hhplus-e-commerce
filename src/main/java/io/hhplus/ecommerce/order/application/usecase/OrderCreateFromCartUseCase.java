@@ -44,11 +44,6 @@ public class OrderCreateFromCartUseCase {
                 ))
                 .toList();
 
-        // 3. 쿠폰 검증 (금액 계산 전 사용자 권한 체크)
-        if (command.getCouponId() != null) {
-            couponService.validateCoupon(command.getCouponId(), command.getUserId(), BigDecimal.ZERO);
-        }
-
         // 4. 주문 생성
        Order order = orderService.createOrderFromCart(command.of(orderId,command.getUserId(), command.getCouponId(),products , cartItems));
 

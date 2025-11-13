@@ -17,7 +17,9 @@ public enum CouponErrorCode implements ErrorCode {
     COUPON_SOLD_OUT(HttpStatus.BAD_REQUEST,"COUPON_SOLD_OUT","쿠폰이 모두 소진되었습니다"),
     COUPON_NOT_AVAILABLE(HttpStatus.BAD_REQUEST,"COUPON_NOT_AVAILABLE","사용할 수 없는 쿠폰입니다."),
     COUPON_MINIMUM_AMOUNT_NOT_MET(HttpStatus.BAD_REQUEST,"COUPON_MINIMUM_AMOUNT_NOT_MET","쿠폰 적용 최소 주문 금액을 충족해야합니다."),
-    COUPON_MAXIMUM_AMOUNT_NOT_MET(HttpStatus.BAD_REQUEST,"COUPON_MAXIMUM_AMOUNT_NOT_MET","쿠폰 적용 최대 주문 금액을 초과 하였습니다");
+    COUPON_MAXIMUM_AMOUNT_NOT_MET(HttpStatus.BAD_REQUEST,"COUPON_MAXIMUM_AMOUNT_NOT_MET","쿠폰 적용 최대 주문 금액을 초과 하였습니다"),
+    USER_COUPON_NOT_FOUND(HttpStatus.BAD_REQUEST,"USER_COUPON_NOT_FOUND","유저가 보유하지 않은 쿠폰입니다.");
+
 
     private final HttpStatus status;
     private final String code;

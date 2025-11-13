@@ -41,4 +41,14 @@ public class OrderRepositoryAdapter implements OrderRepository {
     public List<Order> findAll() {
         return jpaRepository.findAll();
     }
+
+    @Override
+    public Optional<Order> findByIdWithOrderItems(Long orderId) {
+        return jpaRepository.findByIdWithOrderItems(orderId);
+    }
+
+    @Override
+    public List<Order> findByUserIdWithOrderItems(Long userId) {
+        return jpaRepository.findByUserIdWithOrderItems(userId);
+    }
 }

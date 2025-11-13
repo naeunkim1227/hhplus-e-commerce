@@ -56,6 +56,7 @@ public class OrderService {
         long orderId = this.getNextOrderId();
 
         BigDecimal totalAmount = BigDecimal.ZERO;
+        BigDecimal discountAmount = BigDecimal.ZERO;
         List<OrderItem> orderItems = new ArrayList<>();
 
         for (Product product : orderInfo.getProducts()) {
@@ -77,7 +78,12 @@ public class OrderService {
             orderItems.add(orderItem);
         }
 
-        BigDecimal discountAmount = couponService.calculateDisCountAmount(orderInfo.getCouponId(), totalAmount);
+        if (orderInfo.getCouponId() != null) {
+            //쿠폰 검증
+            couponService.validateCoupon(orderInfo.getCouponId(), orderInfo.getUserId(), totalAmount);
+            discountAmount = couponService.calculateDisCountAmount(orderInfo.getCouponId(), totalAmount);
+        }
+
         BigDecimal finalAmount = totalAmount.subtract(discountAmount);
 
         // order 저장
