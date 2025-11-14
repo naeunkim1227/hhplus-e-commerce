@@ -2,6 +2,7 @@ package io.hhplus.ecommerce.cart.integration;
 
 
 import io.hhplus.ecommerce.cart.application.dto.command.CartItemAddCommand;
+import io.hhplus.ecommerce.cart.application.dto.command.CartItemUpdateCommand;
 import io.hhplus.ecommerce.cart.application.dto.result.CartItemDto;
 import io.hhplus.ecommerce.cart.application.usecase.*;
 import io.hhplus.ecommerce.common.exception.BusinessException;
@@ -12,6 +13,7 @@ import io.hhplus.ecommerce.product.domain.exception.ProductErrorCode;
 import io.hhplus.ecommerce.product.infrastructure.repositoty.jpa.JpaProductRepository;
 import io.hhplus.ecommerce.user.domain.entity.User;
 import io.hhplus.ecommerce.user.infrastructure.repositoty.jpa.JpaUserRepository;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,6 +37,9 @@ class CartIntegrationTest {
 
     @Autowired
     CartAddUseCase cartAddUseCase;
+
+    @Autowired
+    CartUpdateUseCase cartUpdateUseCase;
 
     @Autowired
     JpaProductRepository jpaProductRepository;
@@ -103,6 +108,36 @@ class CartIntegrationTest {
             assertThat(e).isInstanceOf(BusinessException.class);
             assertThat(((BusinessException) e).getErrorCode()).isEqualTo(ProductErrorCode.INSUFFICIENT_STOCK);
         }
+    }
+
+
+    @Test
+    @DisplayName("장바구니 수량을 변경할 수 있다.")
+    @Transactional
+    void changeCartQuantity() {
+        //Given 카트 상품 추가
+        CartItemAddCommand addCommand = CartItemAddCommand.builder()
+                .quantity(1)
+                .productId(productList.get(0).getId())
+                .userId(user.getId())
+                .build();
+
+        CartItemDto addCart = cartAddUseCase.execute(addCommand);
+
+        //When
+        CartItemUpdateCommand updateCommand = CartItemUpdateCommand.builder()
+                .cartItemId(addCart.getCartItemId())
+                .userId(user.getId())
+                .quantity(2)
+                .build();
+
+        CartItemDto updateCart = cartUpdateUseCase.excute(updateCommand);
+
+        //Then
+        Assertions.assertAll(
+                () -> assertThat(updateCart.getCartItemId()).isEqualTo(addCart.getCartItemId()),
+                () -> assertThat(updateCart.getQuantity()).isEqualTo(3)
+        );
     }
 
 

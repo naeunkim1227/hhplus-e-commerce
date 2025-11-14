@@ -101,21 +101,9 @@ public class CartServiceTest {
     @DisplayName("장바구니에 상품 수량을 수정할 수 있다")
     void updateCartItem_Success() {
         //Given
-        //이미 담겨져 있는 상품
         CartItem existingCartItem = CartItemFixture.defaultCartItem();
         given(cartRepository.findById(1L))
                 .willReturn(Optional.of(existingCartItem));
-
-        //저장 후 상품
-        CartItem savedCartItem = CartItem.builder()
-                .id(1L)
-                .userId(1L)
-                .productId(1L)
-                .quantity(5)
-                .build();
-        given(cartRepository.save(any(CartItem.class)))
-                .willReturn(savedCartItem);
-
 
         CartItemUpdateCommand updateCommand = CartItemUpdateCommand.builder()
                 .userId(1L)
@@ -126,14 +114,15 @@ public class CartServiceTest {
         // When
         CartItem result = cartService.updateCartItem(updateCommand);
 
-        // Then: 검증
+        // Then
         assertThat(result).isNotNull();
+        assertThat(result).isSameAs(existingCartItem); // 동일한 객체 반환
         assertThat(result.getUserId()).isEqualTo(1L);
         assertThat(result.getProductId()).isEqualTo(1L);
         assertThat(result.getQuantity()).isEqualTo(5);
 
         verify(cartRepository, times(1)).findById(1L);
-        verify(cartRepository, times(1)).save(any(CartItem.class));
+        verify(cartRepository, never()).save(any(CartItem.class));
     }
 
 

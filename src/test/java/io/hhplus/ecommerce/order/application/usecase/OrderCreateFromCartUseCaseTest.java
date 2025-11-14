@@ -21,7 +21,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.junit.jupiter.api.Assertions;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -62,7 +61,13 @@ class OrderCreateFromCartUseCaseTest {
     @BeforeEach
     void setUp() {
         // 테스트 데이터 준비
-        product1 = ProductFixture.defaultProduct();
+        product1 = Product.builder()
+                .id(1L)  // ID 명시적 설정 (unit test용)
+                .name("프레첼")
+                .price(BigDecimal.valueOf(5000))
+                .stock(100L)
+                .build();
+
         product2 = Product.builder()
                 .id(2L)
                 .name("아메리카노")
@@ -110,11 +115,12 @@ class OrderCreateFromCartUseCaseTest {
         given(productService.reserveStock(1L, 2L, 1))
                 .willReturn(product2);
 
-        // 5. 주문 생성
-        given(orderService.createOrderFromCart(any(OrderInfo.class)))
+
+        // 4. 주문 생성 (리팩토링된 공통 메서드 사용)
+        given(orderService.createOrderWithItems(any(OrderInfo.class)))
                 .willReturn(order);
 
-        // 6. 결제 처리
+        // 5. 결제 처리
         doNothing().when(paymentService).processPayment(
                 anyLong(), anyLong(), any(BigDecimal.class), anyList());
 
@@ -130,7 +136,8 @@ class OrderCreateFromCartUseCaseTest {
         verify(orderService, times(1)).getNextOrderId();
         verify(productService, times(2)).reserveStock(anyLong(), anyLong(), anyInt());
         verify(couponService, never()).validateCoupon(anyLong(), anyLong(), any(BigDecimal.class));
-        verify(orderService, times(1)).createOrderFromCart(any(OrderInfo.class));
+        verify(couponService, never()).calculateDisCountAmount(anyLong(), any(BigDecimal.class));
+        verify(orderService, times(1)).createOrderWithItems(any(OrderInfo.class));
         verify(paymentService, times(1)).processPayment(
                 eq(1L), eq(1L), any(BigDecimal.class), eq(List.of(1L, 2L)));
     }
@@ -158,9 +165,16 @@ class OrderCreateFromCartUseCaseTest {
         given(productService.reserveStock(1L, 2L, 1))
                 .willReturn(product2);
 
-        // 4. 주문 생성 (쿠폰 할인 적용)
+        // 4. 쿠폰 검증 및 할인 계산 (UseCase에서 직접 호출)
+        BigDecimal totalAmount = BigDecimal.valueOf(14500); // (5000*2) + (4500*1)
+        BigDecimal discountAmount = BigDecimal.valueOf(1450); // 10% 할인
+        doNothing().when(couponService).validateCoupon(10L, 1L, totalAmount);
+        given(couponService.calculateDisCountAmount(10L, totalAmount))
+                .willReturn(discountAmount);
+
+        // 5. 주문 생성 (리팩토링된 공통 메서드 사용)
         Order orderWithCoupon = OrderFixture.orderWithCoupon();
-        given(orderService.createOrderFromCart(any(OrderInfo.class)))
+        given(orderService.createOrderWithItems(any(OrderInfo.class)))
                 .willReturn(orderWithCoupon);
 
         // 6. 결제 처리
@@ -175,12 +189,13 @@ class OrderCreateFromCartUseCaseTest {
         assertThat(result.getUserId()).isEqualTo(1L);
         assertThat(result.getDiscountAmount()).isEqualByComparingTo(BigDecimal.valueOf(10000));
 
-
         // 서비스 호출 검증
         verify(cartService, times(1)).getCartItemsByIds(List.of(1L, 2L));
         verify(orderService, times(1)).getNextOrderId();
         verify(productService, times(2)).reserveStock(anyLong(), anyLong(), anyInt());
-        verify(orderService, times(1)).createOrderFromCart(any(OrderInfo.class));
+        verify(couponService, times(1)).validateCoupon(eq(10L), eq(1L), any(BigDecimal.class));
+        verify(couponService, times(1)).calculateDisCountAmount(eq(10L), any(BigDecimal.class));
+        verify(orderService, times(1)).createOrderWithItems(any(OrderInfo.class));
         verify(paymentService, times(1)).processPayment(
                 eq(1L), eq(1L), any(BigDecimal.class), eq(List.of(1L, 2L)));
     }
@@ -228,7 +243,7 @@ class OrderCreateFromCartUseCaseTest {
                 .hasMessage("재고 부족");
 
         // 재고 선점 실패 시 주문 생성 및 결제는 호출되지 않음
-        verify(orderService, never()).createOrderFromCart(any(OrderInfo.class));
+        verify(orderService, never()).createOrderWithItems(any(OrderInfo.class));
         verify(paymentService, never()).processPayment(
                 anyLong(), anyLong(), any(BigDecimal.class), anyList());
     }
