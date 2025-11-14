@@ -155,12 +155,10 @@ public class CartServiceTest {
                 .quantity(5)
                 .build();
 
-        given(cartRepository.findById(1L))
-                .willReturn(Optional.of(cartItem1));
-        given(cartRepository.findById(2L))
-                .willReturn(Optional.of(cartItem2));
-
         List<Long> cartItemIds = List.of(1L, 2L);
+
+        given(cartRepository.findByIdIn(cartItemIds))
+                .willReturn(List.of(cartItem1, cartItem2));
 
         // When
         List<CartItem> cartItems = cartService.getCartItemsByIds(cartItemIds);
@@ -173,8 +171,7 @@ public class CartServiceTest {
         assertThat(cartItems.get(1).getId()).isEqualTo(2L);
         assertThat(cartItems.get(1).getQuantity()).isEqualTo(5);
 
-        verify(cartRepository, times(1)).findById(1L);
-        verify(cartRepository, times(1)).findById(2L);
+        verify(cartRepository, times(1)).findByIdIn(cartItemIds);
     }
 
 

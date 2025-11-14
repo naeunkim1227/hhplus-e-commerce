@@ -42,7 +42,7 @@ public class UserJpaTest {
                 ("유저 정보 검증",
                         () -> assertThat(foundUser.getId()).isNotNull(),
                         () -> assertThat(foundUser.getName()).isEqualTo("김문어"),
-                        () -> assertThat(foundUser.getBalance()).isEqualTo(50000)
+                        () -> assertThat(foundUser.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(50000))
                 );
     }
 
@@ -90,7 +90,7 @@ public class UserJpaTest {
         Assertions.assertAll(
                 () -> assertThat(updatedUser).isNotNull(),
                 () -> assertThat(updatedUser.getId()).isEqualTo(userId),
-                () ->  assertThat(updatedUser.getBalance()).isEqualTo(BigDecimal.valueOf(60000))
+                () ->  assertThat(updatedUser.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(60000))
         );
     }
 

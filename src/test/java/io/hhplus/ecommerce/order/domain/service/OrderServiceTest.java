@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName( "OrderService 단위 Test")
-public class OrderServiceTest {
+public class OrderServiceTest  {
 
     @Mock
     private OrderRepository orderRepository;
@@ -52,7 +52,7 @@ public class OrderServiceTest {
     @DisplayName("주문 조회 성공")
     @Test
     void getOrders_Success(){
-        given(orderRepository.findById(1L)).willReturn(Optional.of(fixedOrder));
+        given(orderRepository.findByIdWithOrderItems(1L)).willReturn(Optional.of(fixedOrder));
 
         Order orderResult = orderService.getOrder(1L);
 
@@ -61,19 +61,19 @@ public class OrderServiceTest {
         assertThat(orderResult.getUserId()).isEqualTo(1L);
         assertThat(orderResult.getTotalAmount()).isEqualTo(BigDecimal.valueOf(10000));
 
-        verify(orderRepository, times(1)).findById(1L);
+        verify(orderRepository, times(1)).findByIdWithOrderItems(1L);
     }
 
     @DisplayName("유효하지 않은 주문아이디로 조회시 주문을 찾을 수 없다")
     @Test
     void getOrders_WithoutId_Fail(){
-        given(orderRepository.findById(2L)).willReturn(Optional.empty());
+        given(orderRepository.findByIdWithOrderItems(2L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> orderService.getOrder(2L))
                 .isInstanceOf(BusinessException.class)
                         .hasMessage(OrderErrorCode.ORDER_NOT_FOUND.getMessage());
 
-        verify(orderRepository, times(1)).findById(2L);
+        verify(orderRepository, times(1)).findByIdWithOrderItems(2L);
     }
 
 
@@ -88,7 +88,7 @@ public class OrderServiceTest {
                 .totalAmount(BigDecimal.valueOf(10000))
                 .build();
 
-        given(orderRepository.findById(1L)).willReturn(Optional.of(pendingOrder));
+        given(orderRepository.findByIdWithOrderItems(1L)).willReturn(Optional.of(pendingOrder));
 
         // When
         orderService.completeOrder(1L);
@@ -96,7 +96,7 @@ public class OrderServiceTest {
         // Then
         assertThat(pendingOrder.getStatus()).isEqualTo(OrderStatus.PAYMENT_COMPLETED);
         assertThat(pendingOrder.getUpdatedAt()).isNotNull();
-        verify(orderRepository, times(1)).findById(1L);
+        verify(orderRepository, times(1)).findByIdWithOrderItems(1L);
         verify(orderRepository, times(1)).save(pendingOrder);
     }
 
@@ -112,7 +112,7 @@ public class OrderServiceTest {
                 .totalAmount(BigDecimal.valueOf(10000))
                 .build();
 
-        given(orderRepository.findById(1L)).willReturn(Optional.of(pendingOrder));
+        given(orderRepository.findByIdWithOrderItems(1L)).willReturn(Optional.of(pendingOrder));
 
         // When
         orderService.failOrder(1L);
@@ -120,7 +120,7 @@ public class OrderServiceTest {
         // Then
         assertThat(pendingOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);
         assertThat(pendingOrder.getUpdatedAt()).isNotNull();
-        verify(orderRepository, times(1)).findById(1L);
+        verify(orderRepository, times(1)).findByIdWithOrderItems(1L);
         verify(orderRepository, times(1)).save(pendingOrder);
     }
 
