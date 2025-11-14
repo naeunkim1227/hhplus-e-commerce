@@ -2,7 +2,6 @@ package io.hhplus.ecommerce.product.integration;
 
 import io.hhplus.ecommerce.common.exception.BusinessException;
 import io.hhplus.ecommerce.config.TestContainerConfig;
-import io.hhplus.ecommerce.order.domain.entity.Order;
 import io.hhplus.ecommerce.product.application.dto.command.ProductCreateCommand;
 import io.hhplus.ecommerce.product.application.dto.result.ProductDto;
 import io.hhplus.ecommerce.product.application.dto.command.ProductPopularCommand;
