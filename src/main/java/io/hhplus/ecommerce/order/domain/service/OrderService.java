@@ -86,9 +86,11 @@ public class OrderService {
 
         BigDecimal finalAmount = totalAmount.subtract(discountAmount);
 
-        // order 저장
-        Order order = createOrder(orderId, orderInfo.getUserId(), orderInfo.getCouponId(), totalAmount, discountAmount, finalAmount);
+        // order 생성 및 orderItems 추가
+        Order order = Order.create(orderId, orderInfo.getUserId(), orderInfo.getCouponId(), totalAmount, discountAmount, finalAmount);
         orderItems.forEach(order::addOrderItem);
+
+        // order와 orderItems를 함께 저장 (cascade)
         orderRepository.save(order);
         return order;
     }
@@ -127,8 +129,7 @@ public class OrderService {
     }
 
     public OrderItem createOrderItem(Long productId, BigDecimal price, int quantity) {
-        OrderItem orderItem = OrderItem.create(productId, price, quantity);
-        return orderItemRepository.save(orderItem);
+        return OrderItem.create(productId, price, quantity);
     }
 
     /**

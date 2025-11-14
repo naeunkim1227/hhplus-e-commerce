@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -36,6 +37,7 @@ public class PaymentEventHandler {
      * 3. 주문 완료 상태로 변경
      * 4. 장바구니 비우기
      */
+    @Transactional
     @Async
     @EventListener
     public void handlePaymentSuccess(PaymentSuccessEvent event) {
@@ -82,6 +84,7 @@ public class PaymentEventHandler {
      * 1. 재고 예약 해제 (RELEASED)
      * 2. 주문 실패 상태로 변경
      */
+    @Transactional
     @Async
     @EventListener
     public void handlePaymentFailure(PaymentFailureEvent event) {

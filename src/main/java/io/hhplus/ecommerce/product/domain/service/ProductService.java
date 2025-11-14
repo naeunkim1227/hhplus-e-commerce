@@ -79,7 +79,8 @@ public class ProductService {
      */
     public Product reserveStock(Long orderId, Long productId, int quantity) {
         Product product = getProduct(productId);
-        ProductReservation.create(orderId, productId, quantity);
+        ProductReservation reservation = ProductReservation.create(orderId, productId, quantity);
+        productReservationRepository.save(reservation);
         validate(product, quantity);
         return productRepository.save(product);
     }
