@@ -7,12 +7,13 @@ import io.hhplus.ecommerce.coupon.domain.entity.Coupon;
 import io.hhplus.ecommerce.coupon.domain.entity.CouponStatus;
 import io.hhplus.ecommerce.coupon.domain.entity.CouponType;
 import io.hhplus.ecommerce.coupon.infrastructure.repositoty.jpa.JpaCouponRepository;
-import jakarta.persistence.EntityManager;
+import io.hhplus.ecommerce.coupon.infrastructure.repositoty.jpa.JpaUserCouponRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -29,6 +30,7 @@ import static org.assertj.core.api.Assertions.*;
 
 
 @SpringBootTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import(TestContainerConfig.class)
 @DisplayName("Coupon 통합 테스트 - UseCase + Service + Repository + DB")
 public class CouponIntergrationTest {
@@ -40,7 +42,7 @@ public class CouponIntergrationTest {
     private JpaCouponRepository couponRepository;
 
     @Autowired
-    private EntityManager entityManager;
+    private JpaUserCouponRepository userCouponRepository;
 
     @Autowired
     private TransactionTemplate transactionTemplate;
@@ -51,6 +53,8 @@ public class CouponIntergrationTest {
 
     @BeforeEach
     void setUp() {
+        // 자식 엔티티부터 삭제 (외래 키 제약 조건)
+        userCouponRepository.deleteAll();
         couponRepository.deleteAll();
     }
 
@@ -153,7 +157,7 @@ public class CouponIntergrationTest {
                 issued = true;
             }catch (ObjectOptimisticLockingFailureException e) {
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(300);
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
