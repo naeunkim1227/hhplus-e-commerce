@@ -27,9 +27,9 @@ import io.hhplus.ecommerce.user.domain.entity.User;
 import io.hhplus.ecommerce.user.infrastructure.repositoty.jpa.JpaUserRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -40,6 +40,7 @@ import static org.assertj.core.api.Assertions.*;
 
 
 @SpringBootTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import(TestContainerConfig.class)
 @DisplayName("Order 통합 테스트 - UseCase + Service + Repository + DB")
 public class OrderIntegrationTest {
@@ -111,14 +112,16 @@ public class OrderIntegrationTest {
 
     @AfterEach
     void tearDown() {
+        // 자식 엔티티부터 삭제 (외래 키 제약 조건)
+        jpaOrderRepository.deleteAll();  // Order & OrderItem (cascade)
         jpaCartRepository.deleteAll();
+        jpaUserCouponRepository.deleteAll();  // User, Coupon 참조
         jpaProductRepository.deleteAll();
         jpaCouponRepository.deleteAll();
         jpaUserRepository.deleteAll();
     }
 
     @Test
-    @Transactional
     @DisplayName("장바구니에 있는 상품을 주문 및 조회 - 쿠폰 미사용")
     void createCartOrderAndGetOrder() {
         //Given
@@ -147,7 +150,6 @@ public class OrderIntegrationTest {
 
 
     @Test
-    @Transactional
     @DisplayName("장바구니에 있는 상품을 주문 및 조회 - 쿠폰 사용")
     void createCartOrderAndGetOrderWithCoupon() {
         //Given
@@ -183,7 +185,6 @@ public class OrderIntegrationTest {
 
 
     @Test
-    @Transactional
     @DisplayName("30000원 이하 주문에 FIXED 쿠폰 적용 시 실패 - 최소 주문금액 미달")
     void createCartOrderAndFailOrderWithCoupon() {
         // Given
@@ -254,8 +255,7 @@ public class OrderIntegrationTest {
     }
 
     @Test
-    @Transactional
-    @DisplayName("Order와 OrderItem을 함께 조회 - Fetch Join")
+    @DisplayName("주문 생성 후 주문을 조회 - Fetch Join")
     void findOrderWithOrderItems() {
         // Given: 주문 생성
         OrderCreateFromCartCommand command = OrderCreateFromCartCommand.builder()
@@ -265,8 +265,7 @@ public class OrderIntegrationTest {
         OrderDto orderDto = orderCreateFromCartUseCase.excute(command);
 
         // When: Order와 OrderItem을 함께 조회
-        Order order = jpaOrderRepository.findByIdWithOrderItems(orderDto.getId())
-                .orElseThrow();
+        OrderDto order = orderGetUseCase.excute(orderDto.getId());
 
         // Then
         Assertions.assertAll(
@@ -279,5 +278,10 @@ public class OrderIntegrationTest {
                         .isEqualTo(savedCartItem.getQuantity())
         );
     }
+
+
+
+
+
 
 }

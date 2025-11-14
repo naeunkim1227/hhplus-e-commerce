@@ -2,12 +2,14 @@ package io.hhplus.ecommerce.order.application.usecase;
 
 import io.hhplus.ecommerce.cart.domain.entity.CartItem;
 import io.hhplus.ecommerce.cart.domain.service.CartService;
+import io.hhplus.ecommerce.common.exception.BusinessException;
 import io.hhplus.ecommerce.coupon.domain.service.CouponService;
 import io.hhplus.ecommerce.fixture.*;
 import io.hhplus.ecommerce.order.application.dto.command.OrderCreateFromCartCommand;
 import io.hhplus.ecommerce.order.application.dto.result.OrderDto;
 import io.hhplus.ecommerce.order.domain.dto.OrderInfo;
 import io.hhplus.ecommerce.order.domain.entity.Order;
+import io.hhplus.ecommerce.order.domain.exception.OrderErrorCode;
 import io.hhplus.ecommerce.order.domain.service.OrderService;
 import io.hhplus.ecommerce.payment.domain.service.PaymentService;
 import io.hhplus.ecommerce.product.domain.entity.Product;
@@ -19,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.Assertions;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -155,10 +158,7 @@ class OrderCreateFromCartUseCaseTest {
         given(productService.reserveStock(1L, 2L, 1))
                 .willReturn(product2);
 
-        // 4. 쿠폰 검증 (금액 계산 전 사용자 권한 체크)
-        doNothing().when(couponService).validateCoupon(10L, 1L, BigDecimal.ZERO);
-
-        // 5. 주문 생성 (쿠폰 할인 적용)
+        // 4. 주문 생성 (쿠폰 할인 적용)
         Order orderWithCoupon = OrderFixture.orderWithCoupon();
         given(orderService.createOrderFromCart(any(OrderInfo.class)))
                 .willReturn(orderWithCoupon);
@@ -173,14 +173,13 @@ class OrderCreateFromCartUseCaseTest {
         // Then: 결과 검증
         assertThat(result).isNotNull();
         assertThat(result.getUserId()).isEqualTo(1L);
-        assertThat(result.getDiscountAmount()).isEqualTo(10000);
+        assertThat(result.getDiscountAmount()).isEqualByComparingTo(BigDecimal.valueOf(10000));
 
 
         // 서비스 호출 검증
         verify(cartService, times(1)).getCartItemsByIds(List.of(1L, 2L));
         verify(orderService, times(1)).getNextOrderId();
         verify(productService, times(2)).reserveStock(anyLong(), anyLong(), anyInt());
-        verify(couponService, times(1)).validateCoupon(10L, 1L, BigDecimal.ZERO);
         verify(orderService, times(1)).createOrderFromCart(any(OrderInfo.class));
         verify(paymentService, times(1)).processPayment(
                 eq(1L), eq(1L), any(BigDecimal.class), eq(List.of(1L, 2L)));
@@ -198,6 +197,10 @@ class OrderCreateFromCartUseCaseTest {
 
         given(cartService.getCartItemsByIds(List.of()))
                 .willReturn(List.of());
+
+        assertThatThrownBy(() -> orderCreateFromCartUseCase.excute(command))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage(OrderErrorCode.CART_NOT_FOUND.getMessage());
     }
 
     @Test
