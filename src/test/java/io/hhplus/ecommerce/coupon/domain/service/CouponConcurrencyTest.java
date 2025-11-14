@@ -9,6 +9,7 @@ import io.hhplus.ecommerce.coupon.domain.repository.CouponRepository;
 import io.hhplus.ecommerce.coupon.domain.repository.UserCouponRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 쿠폰 발급 동시성 테스트
  * ExecutorService를 사용해 멀티스레드 환경에서 동시 요청 시뮬레이션
  */
+@Tag("concurrency")
 @SpringBootTest
 class CouponConcurrencyTest {
 

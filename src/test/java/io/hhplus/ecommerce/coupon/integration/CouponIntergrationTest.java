@@ -8,10 +8,7 @@ import io.hhplus.ecommerce.coupon.domain.entity.CouponStatus;
 import io.hhplus.ecommerce.coupon.domain.entity.CouponType;
 import io.hhplus.ecommerce.coupon.infrastructure.repositoty.jpa.JpaCouponRepository;
 import io.hhplus.ecommerce.coupon.infrastructure.repositoty.jpa.JpaUserCouponRepository;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -90,6 +87,7 @@ public class CouponIntergrationTest {
 
     @Test
     @DisplayName("선착순 쿠폰을 발급한다 - 낙관적 락을 사용하여 100명이 동시에 요청했을때 10명만 성공한다.")
+    @Tag("concurrency")
     void issueCouponConcurrency() throws InterruptedException {
         // given: 별도 트랜잭션으로 쿠폰 저장하여 커밋 보장
         int issuedCoupontCount = 10;

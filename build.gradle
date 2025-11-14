@@ -45,26 +45,31 @@ dependencies {
     implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
 }
 
+
+//동시성 테스트 제외 별도 분리
 tasks.named('test') {
     useJUnitPlatform()
     finalizedBy jacocoTestReport
     ignoreFailures = true
+    exclude '**/*CouponConcurrencyTest.class'
+    exclude '**/*CouponIntergrationTest.class'
 }
 
-// 통합 테스트만 실행하는 태스크
-task integrationTest(type: Test) {
+//동시성 테스트
+task concurrencyTest(type: Test) {
     useJUnitPlatform {
-        includeTags 'integration'
+        includeTags 'concurrency'
     }
-    include '**/*ConcurrencyTest.class'
-    include '**/EcommerceApplicationTests.class'
 }
 
-// 단위 테스트만 실행하는 태스크
+// 단위 테스트만 실행하는 태스크 (빠른 테스트)
 task unitTest(type: Test) {
     useJUnitPlatform()
     exclude '**/*ConcurrencyTest.class'
+    exclude '**/*IntegrationTest.class'
     exclude '**/EcommerceApplicationTests.class'
+    exclude '**/DataSourceTest.class'
+    exclude '**/TestContainerTest.class'
     finalizedBy jacocoTestReport
     ignoreFailures = true
 }
