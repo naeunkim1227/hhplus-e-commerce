@@ -35,4 +35,12 @@ public class CartItem {
                 .updatedAt(LocalDateTime.now())
                 .build();
     }
+
+    /**
+     * 장바구니 수량 변경 (Dirty Checking용)
+     */
+    public void updateQuantity(int additionalQuantity) {
+        this.quantity += additionalQuantity;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

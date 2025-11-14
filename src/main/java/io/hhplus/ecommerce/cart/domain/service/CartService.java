@@ -10,6 +10,7 @@ import io.hhplus.ecommerce.cart.domain.validator.CartValidator;
 import io.hhplus.ecommerce.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -61,20 +62,13 @@ public class CartService {
     /**
      * 장바구니 수량 변경
      */
+    @Transactional
     public CartItem updateCartItem(CartItemUpdateCommand command) {
-        Optional<CartItem> existingItem = cartRepository.findById(command.getCartItemId());
-        if(existingItem.isEmpty()){
-            throw new BusinessException(CartErrorCode.CART_NOT_FOUND);
-        }
+        CartItem existingItem = cartRepository.findById(command.getCartItemId())
+                .orElseThrow(() -> new BusinessException(CartErrorCode.CART_NOT_FOUND));
 
-        CartItem cartItem = CartItem.builder()
-                        .quantity(existingItem.get().getQuantity() + command.getQuantity())
-                        .cartItemId(command.getCartItemId())
-                        .createdAt(LocalDateTime.now())
-                        .updatedAt(LocalDateTime.now())
-                        .build();
-
-        return  cartRepository.save(cartItem);
+        existingItem.updateQuantity(command.getQuantity());
+        return existingItem;
     }
 
     /**

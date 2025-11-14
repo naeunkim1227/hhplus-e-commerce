@@ -31,15 +31,26 @@ public class Product {
     @Enumerated(EnumType.STRING)
     private ProductStatus status;
 
-    @jakarta.persistence.Version
+    @Version
     private Long version;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 
     // 상품 생성
     public static Product create(ProductCreateCommand command) {
         validateStock(command.getStock());
-
         return Product.builder()
                 .name(command.getName())
                 .price(command.getPrice())

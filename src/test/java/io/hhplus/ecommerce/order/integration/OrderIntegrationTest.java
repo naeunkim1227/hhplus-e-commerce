@@ -18,7 +18,6 @@ import io.hhplus.ecommerce.order.application.dto.command.OrderCreateFromCartComm
 import io.hhplus.ecommerce.order.application.dto.result.OrderDto;
 import io.hhplus.ecommerce.order.application.usecase.OrderCreateFromCartUseCase;
 import io.hhplus.ecommerce.order.application.usecase.OrderGetUseCase;
-import io.hhplus.ecommerce.order.domain.entity.Order;
 import io.hhplus.ecommerce.order.infrastructure.repositoty.jpa.JpaOrderRepository;
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.entity.ProductStatus;

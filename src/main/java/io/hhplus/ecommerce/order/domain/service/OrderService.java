@@ -1,16 +1,15 @@
 package io.hhplus.ecommerce.order.domain.service;
 
-import io.hhplus.ecommerce.cart.domain.entity.CartItem;
 import io.hhplus.ecommerce.common.exception.BusinessException;
 import io.hhplus.ecommerce.coupon.domain.service.CouponService;
 import io.hhplus.ecommerce.order.domain.dto.OrderInfo;
+import io.hhplus.ecommerce.order.domain.dto.OrderItemInfo;
 import io.hhplus.ecommerce.order.domain.entity.Order;
 import io.hhplus.ecommerce.order.domain.entity.OrderItem;
 import io.hhplus.ecommerce.order.domain.entity.OrderStatus;
 import io.hhplus.ecommerce.order.domain.exception.OrderErrorCode;
 import io.hhplus.ecommerce.order.domain.repository.OrderItemRepository;
 import io.hhplus.ecommerce.order.domain.repository.OrderRepository;
-import io.hhplus.ecommerce.product.domain.entity.Product;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -40,82 +39,17 @@ public class OrderService {
         private final List<OrderItem> orderItems;
     }
 
-    /**
-     * 주문 아이템 요청 (도메인 중립적)
-     */
-    public record OrderItemRequest(Long productId, BigDecimal price, int quantity) {}
+
 
     public Long getNextOrderId() {
         return orderRepository.nextId();
     }
 
     /**
-     * 주문 생성 (장바구니에서)
+     * 주문만 생성 (OrderItem 없이)
+     * @deprecated createOrderWithItems 사용을 권장합니다
      */
-    public Order createOrderFromCart(OrderInfo orderInfo) {
-        long orderId = this.getNextOrderId();
-
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        BigDecimal discountAmount = BigDecimal.ZERO;
-        List<OrderItem> orderItems = new ArrayList<>();
-
-        for (Product product : orderInfo.getProducts()) {
-            CartItem cartItem = orderInfo.getCartItems().stream()
-                    .filter(c -> c.getProductId().equals(product.getId()))
-                    .findFirst()
-                    .orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
-
-            BigDecimal itemTotal = BigDecimal.valueOf(cartItem.getQuantity())
-                    .multiply(product.getPrice());
-            totalAmount = totalAmount.add(itemTotal);
-
-            // orderItem 저장
-            OrderItem orderItem = createOrderItem(
-                    product.getId(),
-                    product.getPrice(),
-                    cartItem.getQuantity()
-            );
-            orderItems.add(orderItem);
-        }
-
-        if (orderInfo.getCouponId() != null) {
-            //쿠폰 검증
-            couponService.validateCoupon(orderInfo.getCouponId(), orderInfo.getUserId(), totalAmount);
-            discountAmount = couponService.calculateDisCountAmount(orderInfo.getCouponId(), totalAmount);
-        }
-
-        BigDecimal finalAmount = totalAmount.subtract(discountAmount);
-
-        // order 생성 및 orderItems 추가
-        Order order = Order.create(orderId, orderInfo.getUserId(), orderInfo.getCouponId(), totalAmount, discountAmount, finalAmount);
-        orderItems.forEach(order::addOrderItem);
-
-        // order와 orderItems를 함께 저장 (cascade)
-        orderRepository.save(order);
-        return order;
-    }
-
-    /**
-     * 주문 생성
-     */
-    public Order createOrderDirect(OrderInfo orderInfo) {
-        long orderId = this.getNextOrderId();
-
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        List<OrderItem> orderItems = new ArrayList<>();
-
-        BigDecimal discountAmount = couponService.calculateDisCountAmount(orderInfo.getCouponId(), totalAmount);
-        BigDecimal finalAmount = totalAmount.subtract(discountAmount);
-
-        // order 저장
-        Order order = createOrder(orderId, orderInfo.getUserId(), orderInfo.getCouponId(), totalAmount, discountAmount, finalAmount);
-        orderRepository.save(order);
-        return order;
-    }
-
-    /**
-     * 주문 생성 (장바구니에서)
-     */
+    @Deprecated
     public Order createOrder(
             Long orderId,
             Long userId,
@@ -164,20 +98,13 @@ public class OrderService {
 
     /**
      * 주문 금액 계산 (도메인 중립적)
-     * @param orderId 주문 ID
-     * @param items 주문 아이템 요청 목록
-     * @param discountAmount 할인 금액 (외부에서 계산됨)
      */
-    public OrderCalculation calculateOrder(
-            Long orderId,
-            List<OrderItemRequest> items,
-            BigDecimal discountAmount
-    ) {
+    public OrderCalculation calculateOrder(OrderInfo orderInfo) {
         // 1. 총 금액 계산 및 OrderItem 생성
         BigDecimal totalAmount = BigDecimal.ZERO;
         List<OrderItem> orderItems = new ArrayList<>();
 
-        for (OrderItemRequest item : items) {
+        for (OrderItemInfo item : orderInfo.orderItems()) {
             OrderItem orderItem = createOrderItem(
                     item.productId(),
                     item.price(),
@@ -191,8 +118,29 @@ public class OrderService {
         }
 
         // 2. 최종 금액
-        BigDecimal finalAmount = totalAmount.subtract(discountAmount);
+        BigDecimal finalAmount = totalAmount.subtract(orderInfo.discountAmount());
 
-        return new OrderCalculation(totalAmount, discountAmount, finalAmount, orderItems);
+        return new OrderCalculation(totalAmount, orderInfo.discountAmount(), finalAmount, orderItems);
+    }
+
+
+    /**
+     * 주문 생성 공통화
+     */
+    public Order createOrderWithItems(OrderInfo orderInfo) {
+        // 1. 주문 계산
+        OrderCalculation calc = calculateOrder(orderInfo);
+
+        // 2. Order 생성
+        Order order = Order.create(
+                orderInfo.orderId(), orderInfo.userId(), orderInfo.couponId() != null ? orderInfo.couponId() : 0L,
+                calc.getTotalAmount(), calc.getDiscountAmount(), calc.getFinalAmount()
+        );
+
+        // 3. OrderItem 추가 (영속 엔티티에 추가)
+        calc.getOrderItems().forEach(order::addOrderItem);
+
+        // 4. 저장 (cascade로 orderItems도 함께 저장)
+        return orderRepository.save(order);
     }
 }

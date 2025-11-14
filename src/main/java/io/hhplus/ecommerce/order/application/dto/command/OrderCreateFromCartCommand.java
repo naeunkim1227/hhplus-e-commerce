@@ -21,15 +21,4 @@ public class OrderCreateFromCartCommand {
     private Long userId;
     private Long couponId;
     private List<Long> cartItemIds;
-
-    public static OrderInfo of(Long id,Long userId, Long couponId, List<Product> products, List<CartItem>cartItems) {
-        return OrderInfo.builder()
-                .id(id)
-                .userId(userId)
-                .couponId(couponId)
-                .cartItems(cartItems)
-                .products(products)
-                .build();
-    }
-
 }

@@ -55,7 +55,11 @@ public class OrderDto {
                 .totalAmount(order.getTotalAmount())
                 .discountAmount(order.getDiscountAmount())
                 .finalAmount(order.getFinalAmount())
-                .orderItems(null) // 아예 안채움
+                .orderItems(order.getOrderItems() != null
+                        ? order.getOrderItems().stream()
+                                .map(OrderItemDto::from)
+                                .toList()
+                        : null)
                 .build();
     }
 }
