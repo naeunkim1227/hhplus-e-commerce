@@ -24,6 +24,10 @@ public class UserCoupon {
     private LocalDateTime usedAt;
     private LocalDateTime expiredAt;
 
+    @PrePersist
+    protected void onCreate() {
+        this.issuedAt = LocalDateTime.now();
+    }
 
     public boolean isAvailable() {
         return  this.usedAt == null
