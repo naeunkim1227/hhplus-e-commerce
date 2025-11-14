@@ -2,10 +2,12 @@ package io.hhplus.ecommerce.order.application.usecase;
 
 import io.hhplus.ecommerce.cart.domain.entity.CartItem;
 import io.hhplus.ecommerce.cart.domain.service.CartService;
+import io.hhplus.ecommerce.common.exception.BusinessException;
 import io.hhplus.ecommerce.coupon.domain.service.CouponService;
 import io.hhplus.ecommerce.order.application.dto.command.OrderCreateFromCartCommand;
 import io.hhplus.ecommerce.order.application.dto.result.OrderDto;
 import io.hhplus.ecommerce.order.domain.entity.Order;
+import io.hhplus.ecommerce.order.domain.exception.OrderErrorCode;
 import io.hhplus.ecommerce.order.domain.service.OrderService;
 import io.hhplus.ecommerce.payment.domain.service.PaymentService;
 import io.hhplus.ecommerce.product.domain.entity.Product;
@@ -32,6 +34,10 @@ public class OrderCreateFromCartUseCase {
     public OrderDto excute(OrderCreateFromCartCommand command){
         // 1. 장바구니 아이템 조회
         List<CartItem> cartItems = cartService.getCartItemsByIds(command.getCartItemIds());
+
+        if(cartItems.isEmpty()){
+            throw new BusinessException(OrderErrorCode.CART_NOT_FOUND);
+        }
 
         Long orderId = orderService.getNextOrderId();
 

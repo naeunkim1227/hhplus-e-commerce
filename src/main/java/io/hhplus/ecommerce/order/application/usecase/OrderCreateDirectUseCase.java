@@ -11,8 +11,10 @@ import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.service.ProductService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -23,6 +25,7 @@ public class OrderCreateDirectUseCase {
     private final CouponService couponService;
     private final PaymentService paymentService;
 
+    @Transactional
     public OrderDto excute(OrderCreateDirectCommand command) {
 
         //재고 검증
@@ -45,7 +48,7 @@ public class OrderCreateDirectUseCase {
         OrderItem orderItem = orderService.createOrderItem(command.getProductId(),
                 product.getPrice(), command.getQuantity());
 
-        List<OrderItem> orderItems = List.of(orderItem);
+        List<OrderItem> orderItems = new ArrayList<>();
         orderItems.add(orderItem);
 
         paymentService.processPayment(

@@ -131,14 +131,11 @@ public class OrderService {
         return orderItemRepository.save(orderItem);
     }
 
-
-
-
     /**
      * 주문 조회
      */
     public Order getOrder(Long orderId) {
-        return orderRepository.findById(orderId)
+        return orderRepository.findByIdWithOrderItems(orderId)
                 .orElseThrow(() -> new BusinessException(OrderErrorCode.ORDER_NOT_FOUND));
     }
 
