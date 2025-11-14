@@ -1,7 +1,8 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.7'
+    id 'org.springframework.boot' version '3.3.5'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
 }
 
 group = 'io.hhplus'
@@ -27,16 +28,61 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'com.h2database:h2'
-//    runtimeOnly 'com.mysql:mysql-connector-j'
+    runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:testcontainers:1.19.3'
+    testImplementation 'org.testcontainers:mysql:1.19.3'
+    testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
+    implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.9.0'
 }
 
+
+//동시성 테스트 제외 별도 분리
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
+    ignoreFailures = true
+    exclude '**/*CouponConcurrencyTest.class'
+    exclude '**/*CouponIntergrationTest.class'
+}
+
+//동시성 테스트
+task concurrencyTest(type: Test) {
+    useJUnitPlatform {
+        includeTags 'concurrency'
+    }
+}
+
+// 단위 테스트만 실행하는 태스크 (빠른 테스트)
+task unitTest(type: Test) {
+    useJUnitPlatform()
+    exclude '**/*ConcurrencyTest.class'
+    exclude '**/*IntegrationTest.class'
+    exclude '**/EcommerceApplicationTests.class'
+    exclude '**/DataSourceTest.class'
+    exclude '**/TestContainerTest.class'
+    finalizedBy jacocoTestReport
+    ignoreFailures = true
+}
+
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = true
+    }
 }
