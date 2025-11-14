@@ -115,10 +115,12 @@ public class CartService {
      * @return
      */
     public List<CartItem> getCartItemsByIds(List<Long> cartItemIds) {
-        List<CartItem> cartItems = cartItemIds.stream()
-                .map(cartItemId -> cartRepository.findById(cartItemId)
-                .orElseThrow(() -> new BusinessException(CartErrorCode.CART_NOT_FOUND)))
-                .toList();
+        List<CartItem> cartItems = cartRepository.findByIdIn(cartItemIds);
+
+        // 요청한 ID와 조회된 결과 개수가 다르면 존재하지 않는 CartItem이 있음
+        if (cartItems.size() != cartItemIds.size()) {
+            throw new BusinessException(CartErrorCode.CART_NOT_FOUND);
+        }
 
         return cartItems;
     }

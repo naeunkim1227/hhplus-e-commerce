@@ -28,6 +28,11 @@ public class CartRepositoryAdapter implements CartRepository {
     }
 
     @Override
+    public List<CartItem> findByIdIn(List<Long> ids) {
+        return jpaCartRepository.findByIdIn(ids);
+    }
+
+    @Override
     public List<CartItem> findByUserId(Long userId) {
         return jpaCartRepository.findByUserId(userId);
     }

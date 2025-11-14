@@ -49,6 +49,9 @@ public class InMemoryCartRepository implements CartRepository {
     }
 
     @Override
+    public List<CartItem> findByIdIn(List<Long> ids) {return List.of();}
+
+    @Override
     public List<CartItem> findByUserId(Long userId) {
         return store.values().stream()
                 .filter(cartItem -> cartItem.getUserId().equals(userId))
