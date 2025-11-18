@@ -3,11 +3,14 @@ package io.hhplus.ecommerce.cart.domain.service;
 import io.hhplus.ecommerce.cart.application.dto.command.CartItemAddCommand;
 import io.hhplus.ecommerce.cart.application.dto.command.CartItemDeleteCommand;
 import io.hhplus.ecommerce.cart.application.dto.command.CartItemUpdateCommand;
+import io.hhplus.ecommerce.cart.application.dto.result.CartItemDto;
 import io.hhplus.ecommerce.cart.domain.entity.CartItem;
 import io.hhplus.ecommerce.cart.domain.exception.CartErrorCode;
 import io.hhplus.ecommerce.cart.domain.repository.CartRepository;
 import io.hhplus.ecommerce.cart.domain.validator.CartValidator;
 import io.hhplus.ecommerce.common.exception.BusinessException;
+import io.hhplus.ecommerce.product.domain.entity.Product;
+import io.hhplus.ecommerce.product.domain.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +28,7 @@ public class CartService {
 
     private final CartRepository cartRepository;
     private final CartValidator cartValidator;
+    private final ProductService productService;
 
     /**
      * 장바구니에 상품 추가
@@ -78,17 +82,40 @@ public class CartService {
         return cartRepository.findByUserId(userId);
     }
 
+
+    /**
+     * 사용자의 장바구니 아이템 조회 (상품 정보 포함)
+     * - CartItem + Product 정보를 조합하여 DTO로 반환
+     * - N+1 문제 해결: JOIN으로 한 번에 조회 (총 1번 쿼리)
+     */
+    @Transactional(readOnly = true)
+    public List<CartItemDto> getCartItemsWithProductInfo(Long userId) {
+        return cartRepository.findByUserIdWithProduct(userId).stream()
+                .map(vo -> CartItemDto.builder()
+                        .cartItemId(vo.getCartItemId())
+                        .userId(vo.getUserId())
+                        .productId(vo.getProductId())
+                        .quantity(vo.getQuantity())
+                        .productName(vo.getProductName())
+                        .price(vo.getPrice())
+                        .subtotal(vo.getPrice().multiply(java.math.BigDecimal.valueOf(vo.getQuantity())))
+                        .totalStock(vo.getStock())
+                        .build())
+                .toList();
+    }
+
+
     /**
      * 장바구니 아이템 삭제
      */
-    public void deleteCartItem(CartItemDeleteCommand command) {
-        Optional<CartItem> existingItem = cartRepository.findById(command.getCartItemId());
+    public void deleteCartItem(Long userId, Long cartItemId) {
+        Optional<CartItem> existingItem = cartRepository.findById(cartItemId);
         if(existingItem.isEmpty()){
             throw new BusinessException(CartErrorCode.CART_NOT_FOUND);
         }
 
-        cartValidator.validate(command.getUserId(), existingItem.get());
-        cartRepository.deleteById(command.getCartItemId());
+        cartValidator.validate(userId, existingItem.get());
+        cartRepository.deleteById(cartItemId);
     }
 
     /**
