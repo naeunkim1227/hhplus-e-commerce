@@ -9,10 +9,14 @@ import io.hhplus.ecommerce.coupon.domain.repository.UserCouponRepository;
 import io.hhplus.ecommerce.coupon.domain.validator.CouponValidator;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 
 @Service
 @AllArgsConstructor
@@ -68,21 +72,17 @@ public class CouponService {
      * 쿠폰 발급 (선착순)
      */
     public UserCoupon issueCoupon(Long userId, Long couponId) {
-        Coupon coupon = this.getCoupon(couponId);
-
         userCouponRepository.findByUserIdAndCouponId(userId, couponId)
                 .ifPresent(c -> {
                     throw new BusinessException(CouponErrorCode.COUPON_ALREADY_ISSUED);
                 });
 
-        // 3. 쿠폰 발급 가능 여부 검증
+        Coupon coupon = couponRepository.findByIdForUpdate(couponId)
+                .orElseThrow(() -> new BusinessException(CouponErrorCode.COUPON_NOT_FOUND));
+
         coupon.isAvailableIssue();
-
-        // 4. 쿠폰 발급 수량 증가
         coupon.increaseIssuedQuantity();
-        couponRepository.save(coupon);
 
-        // 5. 사용자 쿠폰 발급
         UserCoupon userCoupon = UserCoupon.create(userId, couponId);
         return userCouponRepository.save(userCoupon);
     }

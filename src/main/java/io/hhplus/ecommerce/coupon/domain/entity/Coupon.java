@@ -36,18 +36,14 @@ public class Coupon {
 
     private BigDecimal discountRate;
 
-    @jakarta.persistence.Version
-    private Long version;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
-
 
     /**
      * 쿠폰 발급 가능 여부 검증

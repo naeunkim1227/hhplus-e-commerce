@@ -36,4 +36,7 @@ public class CouponRepositoryAdapter implements CouponRepository {
     public List<Coupon> findAll() {
         return jpaRepository.findAll();
     }
+
+    @Override
+    public Optional<Coupon> findByIdForUpdate(Long id) {return jpaRepository.findByIdForUpdate(id);}
 }

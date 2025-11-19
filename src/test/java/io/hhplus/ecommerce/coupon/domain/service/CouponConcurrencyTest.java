@@ -27,7 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 쿠폰 발급 동시성 테스트
  * ExecutorService를 사용해 멀티스레드 환경에서 동시 요청 시뮬레이션
  */
-@Tag("concurrency")
 @SpringBootTest
 class CouponConcurrencyTest {
 
@@ -56,7 +55,6 @@ class CouponConcurrencyTest {
                 .status(CouponStatus.ACTIVE)
                 .type(CouponType.RATE)
                 .discountRate(new BigDecimal("0.10"))
-                .version(0L)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();

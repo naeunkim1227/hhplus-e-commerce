@@ -25,7 +25,6 @@ class CouponTest {
                 .endDate(LocalDateTime.now().plusDays(30))
                 .status(CouponStatus.ACTIVE)
                 .type(CouponType.RATE)
-                .version(0L)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();

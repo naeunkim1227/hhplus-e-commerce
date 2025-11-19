@@ -68,7 +68,6 @@ public class CouponIntergrationTest {
                 .status(CouponStatus.ACTIVE)
                 .type(CouponType.RATE)
                 .discountRate(new BigDecimal("0.10"))
-                .version(0L)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -79,8 +78,8 @@ public class CouponIntergrationTest {
 
         Assertions.assertAll(
                 "쿠폰 생성 후 조회",
-            () -> assertThat(savedCoupon).isNotNull(),
-            () -> assertThat(savedCoupon.get().getId()).isEqualTo(createCoupon.getId())
+                () -> assertThat(savedCoupon).isNotNull(),
+                () -> assertThat(savedCoupon.get().getId()).isEqualTo(createCoupon.getId())
         );
     }
 
@@ -102,7 +101,6 @@ public class CouponIntergrationTest {
                 .status(CouponStatus.ACTIVE)
                 .type(CouponType.RATE)
                 .discountRate(new BigDecimal("0.10"))
-                .version(0L)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -116,12 +114,14 @@ public class CouponIntergrationTest {
         // 저장된 쿠폰 확인
         Optional<Coupon> check = couponRepository.findById(couponId);
 
-        int threadCount = 100;
+        int threadCount = 300;
 
         ExecutorService executorService = newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(threadCount);
 
         // when: 100명이 동시에 쿠폰 발급 요청 (재시도 로직 포함)
+        long startTime = System.currentTimeMillis();
+
         for (int i = 0; i < threadCount; i++) {
             long userId = i + 1;
             executorService.submit(() -> {
@@ -131,7 +131,9 @@ public class CouponIntergrationTest {
             });
         }
 
+
         latch.await();
+
         executorService.shutdown();
 
         // then
@@ -140,8 +142,7 @@ public class CouponIntergrationTest {
         Assertions.assertAll(
                 "선착순 쿠폰 검증",
                 () -> assertThat(successCount.get()).isEqualTo(issuedCoupontCount),
-                () -> assertThat(result.getIssuedQuantity()).isEqualTo(issuedCoupontCount),
-                () -> assertThat(result.getVersion()).isEqualTo(10)
+                () -> assertThat(result.getIssuedQuantity()).isEqualTo(issuedCoupontCount)
         );
     }
 
@@ -153,13 +154,16 @@ public class CouponIntergrationTest {
                 couponIssueUseCase.execute(userId, couponId);
                 successCount.incrementAndGet();
                 issued = true;
+                return;
             }catch (ObjectOptimisticLockingFailureException e) {
                 try {
-                    Thread.sleep(300);
+                    Thread.sleep(500);
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
                 retryIssueCoupon(userId, couponId ,false, tryCount + 1);
+            }catch (Exception e) {
+                return;
             }
         }
     }

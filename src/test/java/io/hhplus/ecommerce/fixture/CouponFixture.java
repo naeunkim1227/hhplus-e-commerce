@@ -30,7 +30,6 @@ public class CouponFixture {
                 .status(CouponStatus.ACTIVE)
                 .type(CouponType.RATE)
                 .discountRate(BigDecimal.valueOf(10))
-                .version(0L)
                 .createdAt(DEFAULT_TIMESTAMP)
                 .updatedAt(DEFAULT_TIMESTAMP)
                 .build();
@@ -53,7 +52,6 @@ public class CouponFixture {
                 .status(CouponStatus.ACTIVE)
                 .type(CouponType.RATE)
                 .discountRate(BigDecimal.valueOf(20))
-                .version(0L)
                 .createdAt(DEFAULT_TIMESTAMP)
                 .updatedAt(DEFAULT_TIMESTAMP)
                 .build();
@@ -74,7 +72,6 @@ public class CouponFixture {
                 .status(CouponStatus.INACTIVE)
                 .type(CouponType.RATE)
                 .discountRate(BigDecimal.valueOf(15))
-                .version(0L)
                 .createdAt(DEFAULT_TIMESTAMP)
                 .updatedAt(DEFAULT_TIMESTAMP)
                 .build();

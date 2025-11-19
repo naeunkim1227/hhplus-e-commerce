@@ -34,7 +34,6 @@ public class InMemoryCouponRepository implements CouponRepository {
                     .startDate(coupon.getStartDate())
                     .endDate(coupon.getEndDate())
                     .status(coupon.getStatus())
-                    .version(0L)
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
                     .build();
@@ -62,6 +61,11 @@ public class InMemoryCouponRepository implements CouponRepository {
     @Override
     public List<Coupon> findAll() {
         return new ArrayList<>(store.values());
+    }
+
+    @Override
+    public Optional<Coupon> findByIdForUpdate(Long id) {
+        return Optional.empty();
     }
 
 }
