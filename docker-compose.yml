@@ -17,4 +17,9 @@ services:
      --bind-address=0.0.0.0
      --character-set-server=utf8mb4
      --collation-server=utf8mb4_unicode_ci
+     --innodb-thread-concurrency=0
+     --innodb-buffer-pool-size=2G
+     --innodb-lock-wait-timeout=50
+     --wait-timeout=28800
+     --interactive-timeout=28800
 
