@@ -32,10 +32,10 @@ public class PaymentEventHandler {
 
     /**
      * 결제 성공 이벤트
-     * 1. 재고 예약 확정 (CONFIRMED)
-     * 2. 실제 재고 차감
-     * 3. 주문 완료 상태로 변경
-     * 4. 장바구니 비우기
+     * 1. 주문 완료 상태로 변경
+     * 2. 장바구니 비우기
+     *
+     * 참고: 재고는 이미 주문 생성 시 차감됨
      */
     @Transactional
     @Async
@@ -47,25 +47,11 @@ public class PaymentEventHandler {
         try {
             Long orderId = event.getOrderId();
 
-            // 1. 주문 정보 조회
-            Order order = orderService.getOrder(orderId);
-            List<OrderItem> orderItems = orderService.getOrderItems(orderId);
-
-            // 2. 재고 예약 확정
-            productService.confirmReservation(orderId);
-
-            // 3. 실제 재고 차감
-            for (OrderItem orderItem : orderItems) {
-                productService.decreaseStock(orderItem.getProductId(), orderItem.getQuantity());
-                log.info("재고 차감 완료 - productId: {}, quantity: {}",
-                        orderItem.getProductId(), orderItem.getQuantity());
-            }
-
-            // 4. 주문 완료 상태로 변경
+            // 1. 주문 완료 상태로 변경
             orderService.completeOrder(orderId);
             log.info("주문 완료 처리 - orderId: {}", orderId);
 
-            // 5. 장바구니 비우기
+            // 2. 장바구니 비우기
             if (event.getCartItemIds() != null && !event.getCartItemIds().isEmpty()) {
                 cartService.clearCartItems(event.getCartItemIds());
                 log.info("장바구니 비우기 완료 - orderId: {}, cartItemIds: {}", orderId, event.getCartItemIds());
@@ -75,13 +61,12 @@ public class PaymentEventHandler {
 
         } catch (Exception e) {
             log.error("결제 성공 이벤트 처리 중 오류 발생 - orderId: {}", event.getOrderId(), e);
-            // 실패 시 보상 트랜잭션 처리 필요
         }
     }
 
     /**
      * 결제 실패 이벤트
-     * 1. 재고 예약 해제 (RELEASED)
+     * 1. 재고 복구 (주문 생성 시 차감된 재고를 다시 증가)
      * 2. 주문 실패 상태로 변경
      */
     @Transactional
@@ -94,9 +79,15 @@ public class PaymentEventHandler {
         try {
             Long orderId = event.getOrderId();
 
-            // 1. 재고 예약 해제
-            productService.releaseReservation(orderId);
-            log.info("재고 예약 해제 완료 - orderId: {}", orderId);
+            // 1. 주문 정보 조회 및 재고 복구
+            Order order = orderService.getOrder(orderId);
+            List<OrderItem> orderItems = orderService.getOrderItems(orderId);
+
+            for (OrderItem orderItem : orderItems) {
+                productService.increaseStock(orderItem.getProductId(), orderItem.getQuantity());
+                log.info("재고 복구 완료 - productId: {}, quantity: {}",
+                        orderItem.getProductId(), orderItem.getQuantity());
+            }
 
             // 2. 주문 실패 상태로 변경
             orderService.failOrder(orderId);

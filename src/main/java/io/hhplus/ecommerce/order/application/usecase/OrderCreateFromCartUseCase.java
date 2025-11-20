@@ -41,15 +41,16 @@ public class OrderCreateFromCartUseCase {
             throw new BusinessException(OrderErrorCode.CART_NOT_FOUND);
         }
 
-        // 2. 재고 선점
         Long orderId = orderService.getNextOrderId();
-        List<Product> products = cartItems.stream()
-                .map(cartItem -> productService.reserveStock(
-                        orderId,
-                        cartItem.getProductId(),
-                        cartItem.getQuantity()
-                ))
+        List<Long> productIds = cartItems.stream()
+                .map(CartItem::getProductId)
                 .toList();
+
+        List<Product> products = productService.getProductsByIds(productIds);
+
+        for (CartItem cartItem : cartItems) {
+            productService.decreaseStock(cartItem.getProductId(), cartItem.getQuantity());
+        }
 
         // OrderItemInfo변환
         List<OrderItemInfo> items = cartItems.stream()
@@ -62,7 +63,6 @@ public class OrderCreateFromCartUseCase {
                 })
                 .toList();
 
-        // 4. 총액 계산 및 쿠폰 할인
         BigDecimal totalAmount = items.stream()
                 .map(item -> item.price().multiply(BigDecimal.valueOf(item.quantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -73,11 +73,9 @@ public class OrderCreateFromCartUseCase {
             discountAmount = couponService.calculateDisCountAmount(command.getCouponId(), totalAmount);
         }
 
-        // 5. 주문 생성 (공통 메서드 사용)
         Order order = orderService
                 .createOrderWithItems(OrderInfo.from(orderId,command.getUserId(),command.getCouponId(),items,discountAmount));
 
-        // 6. 결제 처리 (비동기)
         paymentService.processPayment(orderId, order.getUserId(), order.getFinalAmount(), command.getCartItemIds());
 
         return OrderDto.from(order, order.getOrderItems());

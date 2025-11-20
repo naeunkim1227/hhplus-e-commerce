@@ -55,6 +55,16 @@ public class InMemoryProductRepository implements ProductRepository {
     }
 
     @Override
+    public int decreaseStock(Long productId, int quantity) {
+        return 0;
+    }
+
+    @Override
+    public int increaseStock(Long productId, int quantity) {
+        return 0;
+    }
+
+    @Override
     public Optional<Product> findById(Long id) {
         return Optional.ofNullable(store.get(id));
     }

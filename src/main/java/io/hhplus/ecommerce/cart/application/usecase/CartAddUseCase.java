@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 /**
  * 장바구니 담기 UseCase
  * 1. 상품 존재 여부 확인
- * 2. 사용 가능한 재고 확인 (전체 재고 - 선점 재고)
+ * 2. 재고 확인
  * 3. 장바구니에 추가 (이미 있으면 수량 증가)
  */
 @Service
@@ -27,11 +27,10 @@ public class CartAddUseCase {
     public CartItemDto execute(CartItemAddCommand command) {
         Product product = productService.getProduct(command.getProductId());
 
-        if (!productService.isStockAvailableForReservation(command.getProductId(), command.getQuantity())) {
-            throw new BusinessException(ProductErrorCode.INSUFFICIENT_STOCK);
-        }
+        // 재고 확인
+        productService.validate(product, command.getQuantity());
 
-        // 3. 장바구니에 추가
+        // 장바구니에 추가
         CartItem cartItem = cartService.addOrUpdateCartItem(command);
 
         return CartItemDto.from(cartItem, product);

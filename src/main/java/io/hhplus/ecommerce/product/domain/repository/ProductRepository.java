@@ -12,4 +12,15 @@ public interface ProductRepository {
     Product save(Product product);
     List<Product> findAllById(List<Long> productIds);
     List<Product> findPopularProducts(LocalDateTime startDate, int limit);
+
+    /**
+     * 재고 차감 (조건부 UPDATE)
+     * @return 업데이트된 행 수 (0이면 재고 부족)
+     */
+    int decreaseStock(Long productId, int quantity);
+
+    /**
+     * 재고 증가 (결제 실패 시 복구용)
+     */
+    int increaseStock(Long productId, int quantity);
 }

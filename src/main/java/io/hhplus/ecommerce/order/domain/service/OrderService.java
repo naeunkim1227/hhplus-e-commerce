@@ -1,7 +1,6 @@
 package io.hhplus.ecommerce.order.domain.service;
 
 import io.hhplus.ecommerce.common.exception.BusinessException;
-import io.hhplus.ecommerce.coupon.domain.service.CouponService;
 import io.hhplus.ecommerce.order.domain.dto.OrderInfo;
 import io.hhplus.ecommerce.order.domain.dto.OrderItemInfo;
 import io.hhplus.ecommerce.order.domain.entity.Order;
@@ -14,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -25,7 +25,6 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-    private final CouponService couponService;
 
     /**
      * 주문 금액 계산 결과
@@ -97,7 +96,7 @@ public class OrderService {
     }
 
     /**
-     * 주문 금액 계산 (도메인 중립적)
+     * 주문 금액 계산
      */
     public OrderCalculation calculateOrder(OrderInfo orderInfo) {
         // 1. 총 금액 계산 및 OrderItem 생성
@@ -127,6 +126,7 @@ public class OrderService {
     /**
      * 주문 생성 공통화
      */
+    @Transactional(readOnly = false)
     public Order createOrderWithItems(OrderInfo orderInfo) {
         // 1. 주문 계산
         OrderCalculation calc = calculateOrder(orderInfo);

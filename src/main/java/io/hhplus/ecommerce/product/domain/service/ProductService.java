@@ -4,14 +4,12 @@ import io.hhplus.ecommerce.common.exception.BusinessException;
 import io.hhplus.ecommerce.product.application.dto.command.ProductCreateCommand;
 import io.hhplus.ecommerce.product.application.dto.command.ProductPopularCommand;
 import io.hhplus.ecommerce.product.domain.entity.Product;
-import io.hhplus.ecommerce.product.domain.entity.ProductReservation;
-import io.hhplus.ecommerce.product.domain.entity.ProductReservationStatus;
 import io.hhplus.ecommerce.product.domain.exception.ProductErrorCode;
 import io.hhplus.ecommerce.product.domain.repository.ProductRepository;
-import io.hhplus.ecommerce.product.domain.repository.ProductReservationRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,33 +19,32 @@ import java.util.List;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final ProductReservationRepository reservationRepository;
-    private final ProductReservationRepository productReservationRepository;
 
     /**
      * 상품 ID로 상품 조회
      */
+    @Transactional
     public Product getProduct(Long productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ProductErrorCode.PRODUCT_NOT_FOUND));
     }
 
+    /**
+     * 여러 상품 ID로 상품 일괄 조회 (N+1 방지)
+     */
+    public List<Product> getProductsByIds(List<Long> productIds) {
+        return productRepository.findAllById(productIds);
+    }
+
+    /**
+     * 재고 확인
+     */
     public void validate(Product product, int quantity){
-        Long reservedQuantity = productReservationRepository.getTotalReservedQuantity(product.getId());
-        if((reservedQuantity + product.getStock()) - quantity <  0){
+        if(product.getStock() < quantity){
             throw new BusinessException(ProductErrorCode.INSUFFICIENT_STOCK);
         }
     }
 
-    /**
-     * 재고 선점 가능 여부 확인 (장바구니 담기용)
-     */
-    public boolean isStockAvailableForReservation(Long productId, int quantity) {
-        Product product = getProduct(productId);
-        Long reservedQuantity = productReservationRepository.getTotalReservedQuantity(productId);
-        long availableStock = product.getStock() - reservedQuantity;
-        return availableStock >= quantity;
-    }
 
     /**
      * 모든 상품 조회
@@ -75,47 +72,26 @@ public class ProductService {
     }
 
     /**
-     * 주문선점
-     */
-    public Product reserveStock(Long orderId, Long productId, int quantity) {
-        Product product = getProduct(productId);
-        ProductReservation reservation = ProductReservation.create(orderId, productId, quantity);
-        productReservationRepository.save(reservation);
-        validate(product, quantity);
-        return productRepository.save(product);
-    }
-    /**
-     * 재고 선점 확정 (주문 완료 시)
-     * @param orderId 주문 ID
-     */
-    public void confirmReservation(Long orderId) {
-        ProductReservation reservation = reservationRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new BusinessException(ProductErrorCode.RESERVATION_NOT_FOUND));
-
-        reservation.changeStatus(ProductReservationStatus.CONFIRMED);
-        reservationRepository.save(reservation);
-    }
-
-    /**
-     * 재고 선점 해제 (주문 취소 시)
-     * @param orderId 주문 ID
-     */
-    public void releaseReservation(Long orderId) {
-        ProductReservation reservation = reservationRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new BusinessException(ProductErrorCode.RESERVATION_NOT_FOUND));
-        reservation.changeStatus(ProductReservationStatus.RELEASED);
-        reservationRepository.save(reservation);
-    }
-
-    /**
-     * 재고 차감 (결제 완료 후)
+     * 재고 차감 (조건부 UPDATE로 동시성 제어)
      * @param productId 상품 ID
      * @param quantity 차감할 수량
      */
+    @Transactional
     public void decreaseStock(Long productId, int quantity) {
-        Product product = getProduct(productId);
-        product.decreaseStock(quantity);
-        productRepository.save(product);
+        int updated = productRepository.decreaseStock(productId, quantity);
+        if (updated == 0) {
+            throw new BusinessException(ProductErrorCode.INSUFFICIENT_STOCK);
+        }
+    }
+
+    /**
+     * 재고 증가 (결제 실패 시 복구용)
+     * @param productId 상품 ID
+     * @param quantity 증가할 수량
+     */
+    @Transactional
+    public void increaseStock(Long productId, int quantity) {
+        productRepository.increaseStock(productId, quantity);
     }
 
 }

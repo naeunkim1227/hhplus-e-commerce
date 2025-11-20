@@ -42,4 +42,14 @@ public class ProductRepositoryAdapter implements ProductRepository {
     public List<Product> findPopularProducts(LocalDateTime startDate, int limit) {
         return jpaRepository.findPopularProducts(startDate, limit);
     }
+
+    @Override
+    public int decreaseStock(Long productId, int quantity) {
+        return jpaRepository.decreaseStock(productId, quantity);
+    }
+
+    @Override
+    public int increaseStock(Long productId, int quantity) {
+        return jpaRepository.increaseStock(productId, quantity);
+    }
 }

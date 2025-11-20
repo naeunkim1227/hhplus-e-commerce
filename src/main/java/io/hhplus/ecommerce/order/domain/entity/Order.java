@@ -39,7 +39,7 @@ public class Order {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "order",  cascade = CascadeType.PERSIST, orphanRemoval = false)
     @Builder.Default
     private List<OrderItem> orderItems = new ArrayList<>();
 
@@ -54,7 +54,6 @@ public class Order {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
-
 
     public static Order create(
             Long orderId,
@@ -80,7 +79,6 @@ public class Order {
         item.setOrder(this);
         this.orderItems.add(item);
     }
-
 
     public void changeStatus(OrderStatus status){
         this.status = status;

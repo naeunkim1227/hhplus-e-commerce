@@ -109,12 +109,10 @@ class OrderCreateFromCartUseCaseTest {
         // 2. orderId 생성
         given(orderService.getNextOrderId()).willReturn(1L);
 
-        // 3. 재고 선점
-        given(productService.reserveStock(1L, 1L, 2))
-                .willReturn(product1);
-        given(productService.reserveStock(1L, 2L, 1))
-                .willReturn(product2);
-
+        // 3. 상품 조회 및 재고 차감
+        given(productService.getProductsByIds(List.of(1L, 2L)))
+                .willReturn(List.of(product1, product2));
+        doNothing().when(productService).decreaseStock(anyLong(), anyInt());
 
         // 4. 주문 생성 (리팩토링된 공통 메서드 사용)
         given(orderService.createOrderWithItems(any(OrderInfo.class)))
@@ -134,7 +132,8 @@ class OrderCreateFromCartUseCaseTest {
         // 서비스 호출 검증
         verify(cartService, times(1)).getCartItemsByIds(List.of(1L, 2L));
         verify(orderService, times(1)).getNextOrderId();
-        verify(productService, times(2)).reserveStock(anyLong(), anyLong(), anyInt());
+        verify(productService, times(1)).getProductsByIds(List.of(1L, 2L));
+        verify(productService, times(2)).decreaseStock(anyLong(), anyInt());
         verify(couponService, never()).validateCoupon(anyLong(), anyLong(), any(BigDecimal.class));
         verify(couponService, never()).calculateDisCountAmount(anyLong(), any(BigDecimal.class));
         verify(orderService, times(1)).createOrderWithItems(any(OrderInfo.class));
@@ -159,11 +158,10 @@ class OrderCreateFromCartUseCaseTest {
         // 2. orderId 생성
         given(orderService.getNextOrderId()).willReturn(1L);
 
-        // 3. 재고 선점
-        given(productService.reserveStock(1L, 1L, 2))
-                .willReturn(product1);
-        given(productService.reserveStock(1L, 2L, 1))
-                .willReturn(product2);
+        // 3. 상품 조회 및 재고 차감
+        given(productService.getProductsByIds(List.of(1L, 2L)))
+                .willReturn(List.of(product1, product2));
+        doNothing().when(productService).decreaseStock(anyLong(), anyInt());
 
         // 4. 쿠폰 검증 및 할인 계산 (UseCase에서 직접 호출)
         BigDecimal totalAmount = BigDecimal.valueOf(14500); // (5000*2) + (4500*1)
@@ -192,7 +190,8 @@ class OrderCreateFromCartUseCaseTest {
         // 서비스 호출 검증
         verify(cartService, times(1)).getCartItemsByIds(List.of(1L, 2L));
         verify(orderService, times(1)).getNextOrderId();
-        verify(productService, times(2)).reserveStock(anyLong(), anyLong(), anyInt());
+        verify(productService, times(1)).getProductsByIds(List.of(1L, 2L));
+        verify(productService, times(2)).decreaseStock(anyLong(), anyInt());
         verify(couponService, times(1)).validateCoupon(eq(10L), eq(1L), any(BigDecimal.class));
         verify(couponService, times(1)).calculateDisCountAmount(eq(10L), any(BigDecimal.class));
         verify(orderService, times(1)).createOrderWithItems(any(OrderInfo.class));
@@ -219,7 +218,7 @@ class OrderCreateFromCartUseCaseTest {
     }
 
     @Test
-    @DisplayName("재고 선점 실패 시 예외 발생")
+    @DisplayName("재고 차감 실패 시 예외 발생")
     void createOrderFromCart_Fail_OutOfStock() {
         // Given: 재고 부족
         OrderCreateFromCartCommand command = OrderCreateFromCartCommand.builder()
@@ -233,16 +232,19 @@ class OrderCreateFromCartUseCaseTest {
 
         given(orderService.getNextOrderId()).willReturn(1L);
 
-        // 재고 선점 실패 (ProductService 내부에서 검증 후 예외 발생)
-        given(productService.reserveStock(1L, 1L, 2))
-                .willThrow(new IllegalStateException("재고 부족"));
+        given(productService.getProductsByIds(List.of(1L)))
+                .willReturn(List.of(product1));
+
+        // 재고 차감 실패 (조건부 UPDATE가 0 반환하여 예외 발생)
+        doThrow(new IllegalStateException("재고 부족"))
+                .when(productService).decreaseStock(1L, 2);
 
         // When & Then: 예외 발생
         assertThatThrownBy(() -> orderCreateFromCartUseCase.excute(command))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("재고 부족");
 
-        // 재고 선점 실패 시 주문 생성 및 결제는 호출되지 않음
+        // 재고 차감 실패 시 주문 생성 및 결제는 호출되지 않음
         verify(orderService, never()).createOrderWithItems(any(OrderInfo.class));
         verify(paymentService, never()).processPayment(
                 anyLong(), anyLong(), any(BigDecimal.class), anyList());

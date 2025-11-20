@@ -227,7 +227,6 @@ public class OrderIntegrationTest {
                 .status(CouponStatus.ACTIVE)
                 .type(CouponType.FIXED)
                 .discountRate(BigDecimal.valueOf(10000))
-                .version(0L)
                 .endDate(LocalDateTime.now().plusDays(30))
                 .build();
         Coupon savedFixedCoupon = jpaCouponRepository.save(fixedCoupon);
