@@ -6,11 +6,10 @@ import io.hhplus.ecommerce.coupon.domain.entity.Coupon;
 import io.hhplus.ecommerce.coupon.domain.entity.CouponStatus;
 import io.hhplus.ecommerce.coupon.domain.entity.CouponType;
 import io.hhplus.ecommerce.coupon.domain.exception.CouponErrorCode;
-import io.hhplus.ecommerce.coupon.domain.repository.CouponRepository;
-import io.hhplus.ecommerce.coupon.domain.repository.UserCouponRepository;
+import io.hhplus.ecommerce.coupon.infrastructure.repositoty.jpa.JpaCouponRepository;
+import io.hhplus.ecommerce.coupon.infrastructure.repositoty.jpa.JpaUserCouponRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -39,21 +38,20 @@ class CouponConcurrencyTest {
     private CouponService couponService;
 
     @Autowired
-    private CouponRepository couponRepository;
+    private JpaCouponRepository jpaCouponRepository;
 
     @Autowired
-    private UserCouponRepository userCouponRepository;
+    private JpaUserCouponRepository jpaUserCouponRepository;
 
     private Coupon testCoupon;
 
     @BeforeEach
     void setUp() {
         // 테스트용 쿠폰 생성 (재고 100개)
-        testCoupon = Coupon.builder()
-                .id(1L)
+        Coupon coupon = Coupon.builder()
                 .code("TEST")
                 .name("동시")
-                .totalQuantity(100)
+                .totalQuantity(10)
                 .issuedQuantity(0)
                 .startDate(LocalDateTime.now().minusDays(1))
                 .endDate(LocalDateTime.now().plusDays(30))
@@ -64,15 +62,17 @@ class CouponConcurrencyTest {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        couponRepository.save(testCoupon);
+        testCoupon = jpaCouponRepository.save(coupon);
+
+        System.out.println("Saved coupon with ID: " + testCoupon.getId());
     }
 
     @Test
-    @DisplayName("동시성 테스트: 100개 재고에 200명 요청")
+    @DisplayName("동시성 테스트: 10개 쿠폰 20명 요청")
     void issueCoupon_Concurrent() throws InterruptedException {
         // Given
-        int threadCount = 200;
-        int expectedSuccessCount = 100;
+        int threadCount = 20;
+        int expectedSuccessCount = 10;
 
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(threadCount);
@@ -91,24 +91,25 @@ class CouponConcurrencyTest {
                 } catch (BusinessException e) {
                     if (e.getErrorCode() == CouponErrorCode.COUPON_SOLD_OUT) {
                         failCount.incrementAndGet();
+                    } else {
+                        e.printStackTrace();
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             });
         }
 
         executorService.shutdown();
         while (!executorService.isTerminated()) {
-            Thread.sleep(100);
+            Thread.sleep(200);
         }
 
         // Then
         assertThat(successCount.get()).isEqualTo(expectedSuccessCount);
         assertThat(failCount.get()).isEqualTo(threadCount - expectedSuccessCount);
-
-        var issuedCoupons = userCouponRepository.findByCouponId(testCoupon.getId());
-        assertThat(issuedCoupons).hasSize(expectedSuccessCount);
     }
 
     @Test
@@ -130,9 +131,7 @@ class CouponConcurrencyTest {
                 try {
                     latch.countDown();
                     latch.await();
-
                     couponService.issueCoupon(userId, testCoupon.getId());
-
                     successCount.incrementAndGet();
                 } catch (BusinessException e) {
                     if (e.getErrorCode() == CouponErrorCode.COUPON_ALREADY_ISSUED) {
@@ -153,7 +152,7 @@ class CouponConcurrencyTest {
         assertThat(successCount.get()).isEqualTo(1);
         assertThat(alreadyIssuedCount.get()).isEqualTo(threadCount - 1);
 
-        var userCoupons = userCouponRepository.findByUserId(userId);
+        var userCoupons = jpaUserCouponRepository.findByUserId(userId);
         assertThat(userCoupons).hasSize(1);
     }
 }

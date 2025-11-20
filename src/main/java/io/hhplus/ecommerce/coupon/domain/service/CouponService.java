@@ -73,14 +73,15 @@ public class CouponService {
     /**
      * 쿠폰 발급 (선착순)
      */
+    @Transactional
     public UserCoupon issueCoupon(Long userId, Long couponId) {
+        Coupon coupon = couponRepository.findByIdForUpdate(couponId)
+                .orElseThrow(() -> new BusinessException(CouponErrorCode.COUPON_NOT_FOUND));
+
         userCouponRepository.findByUserIdAndCouponId(userId, couponId)
                 .ifPresent(c -> {
                     throw new BusinessException(CouponErrorCode.COUPON_ALREADY_ISSUED);
                 });
-
-        Coupon coupon = couponRepository.findByIdForUpdate(couponId)
-                .orElseThrow(() -> new BusinessException(CouponErrorCode.COUPON_NOT_FOUND));
 
         coupon.isAvailableIssue();
         coupon.increaseIssuedQuantity();
