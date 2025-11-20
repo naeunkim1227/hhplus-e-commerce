@@ -28,6 +28,8 @@ public class User {
     private BigDecimal balance;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    @Version
+    private Long version;
 
     @PrePersist
     protected void onCreate() {

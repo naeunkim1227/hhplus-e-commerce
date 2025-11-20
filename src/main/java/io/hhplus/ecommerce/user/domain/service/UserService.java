@@ -7,7 +7,10 @@ import io.hhplus.ecommerce.user.domain.entity.User;
 import io.hhplus.ecommerce.user.domain.exception.UserErrorCode;
 import io.hhplus.ecommerce.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -32,11 +35,24 @@ public class UserService {
     }
 
     /**
-     * 잔액 차감
+     * 잔액 차감 (낙관적 락 + 재시도)
      */
+    @Retryable(
+        value = {org.springframework.orm.ObjectOptimisticLockingFailureException.class},
+        maxAttempts = 5,
+        backoff = @Backoff(delay = 100)
+    )
+    @Transactional
     public void reduceBalance(Long userId, BigDecimal amount) {
         User user = this.getUser(userId);
         user.reduceBalance(amount);
+        userRepository.save(user);
+    }
+
+    @Transactional(readOnly = false)
+    public void increaseBalance(Long userId, BigDecimal amount) {
+        User user = this.getUser(userId);
+        user.addBalance(amount);
         userRepository.save(user);
     }
 

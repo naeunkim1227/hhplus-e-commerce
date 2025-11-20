@@ -2,29 +2,36 @@ package io.hhplus.ecommerce.user.integration;
 
 import io.hhplus.ecommerce.config.TestContainerConfig;
 import io.hhplus.ecommerce.user.domain.entity.User;
+import io.hhplus.ecommerce.user.domain.service.UserService;
 import io.hhplus.ecommerce.user.infrastructure.repositoty.jpa.JpaUserRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-@DataJpaTest
+@SpringBootTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import(TestContainerConfig.class)
-@DisplayName("Testcontainers JPA 레이어 테스트")
-class UserTestContainerTest {
+@DisplayName("user  통합 테스트")
+public class UserIntegrationTest {
 
     @Autowired
     private JpaUserRepository jpaUserRepository;
+    @Autowired
+    private UserService userService;
 
     @Test
     @DisplayName("User 저장 및 조회")
@@ -90,7 +97,7 @@ class UserTestContainerTest {
         Assertions.assertAll(
                 () -> assertThat(updatedUser).isNotNull(),
                 () -> assertThat(updatedUser.getId()).isEqualTo(userId),
-                () ->  assertThat(updatedUser.getBalance()).isEqualTo(BigDecimal.valueOf(60000))
+                () ->  assertThat(updatedUser.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(60000))
         );
     }
 
@@ -122,4 +129,45 @@ class UserTestContainerTest {
                 .updatedAt(LocalDateTime.now())
                 .build();
     }
+
+
+    @Test
+    @DisplayName("잔액 차감 동시성 테스트 - 10개 스레드가 동시에 1000원씩 차감")
+    void decreaseBalanceConcurrency() throws InterruptedException {
+        // Given
+        int userBalance = 10000;
+        User user = createUser("박물개", 10000);
+        User savedUser = jpaUserRepository.save(user);
+        jpaUserRepository.flush();
+        Long userId = savedUser.getId();
+
+        int threadCount = 5;  // 10개 동시 스레드
+        int decreaseAmount = 1000;
+
+        ExecutorService executorService = newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        // When: 100개 스레드가 동시에 100원씩 차감
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    userService.reduceBalance(userId, BigDecimal.valueOf(decreaseAmount));
+                    Thread.sleep(300);
+
+                } catch (Exception e) {
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        executorService.shutdown();
+
+        // Then
+        User resultUser = jpaUserRepository.findById(userId).orElseThrow();
+        assertThat(resultUser.getBalance()).isEqualByComparingTo(String.valueOf(userBalance - (decreaseAmount * threadCount)));
+    }
+
+
 }
