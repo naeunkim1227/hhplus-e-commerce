@@ -44,6 +44,7 @@ public class CouponService {
     /**
      * 쿠폰 유효성 검증
      */
+    @Transactional(readOnly = true)
     public void validateCoupon(Long couponId, Long userId, BigDecimal amount) {
         Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(() -> new BusinessException(CouponErrorCode.COUPON_NOT_FOUND));
@@ -55,6 +56,7 @@ public class CouponService {
     /**
      * 쿠폰 할인액 계산
      */
+    @Transactional(readOnly = true)
     public BigDecimal calculateDisCountAmount(Long couponId, BigDecimal totalAmount) {
         Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(() -> new BusinessException(CouponErrorCode.COUPON_NOT_FOUND));

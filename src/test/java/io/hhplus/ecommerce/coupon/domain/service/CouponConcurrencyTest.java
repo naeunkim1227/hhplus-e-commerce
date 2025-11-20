@@ -1,6 +1,7 @@
 package io.hhplus.ecommerce.coupon.domain.service;
 
 import io.hhplus.ecommerce.common.exception.BusinessException;
+import io.hhplus.ecommerce.config.TestContainerConfig;
 import io.hhplus.ecommerce.coupon.domain.entity.Coupon;
 import io.hhplus.ecommerce.coupon.domain.entity.CouponStatus;
 import io.hhplus.ecommerce.coupon.domain.entity.CouponType;
@@ -12,7 +13,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -28,6 +31,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * ExecutorService를 사용해 멀티스레드 환경에서 동시 요청 시뮬레이션
  */
 @SpringBootTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(TestContainerConfig.class)
 class CouponConcurrencyTest {
 
     @Autowired
@@ -98,11 +103,10 @@ class CouponConcurrencyTest {
             Thread.sleep(100);
         }
 
-        // Then: 100개 성공  100개는실패
+        // Then
         assertThat(successCount.get()).isEqualTo(expectedSuccessCount);
         assertThat(failCount.get()).isEqualTo(threadCount - expectedSuccessCount);
 
-        // 실제 발급된 쿠폰 수 확인
         var issuedCoupons = userCouponRepository.findByCouponId(testCoupon.getId());
         assertThat(issuedCoupons).hasSize(expectedSuccessCount);
     }
@@ -125,11 +129,11 @@ class CouponConcurrencyTest {
             executorService.submit(() -> {
                 try {
                     latch.countDown();
-                    latch.await();  // 모든 스레드가 동시에 실행
+                    latch.await();
 
                     couponService.issueCoupon(userId, testCoupon.getId());
-                    successCount.incrementAndGet();
 
+                    successCount.incrementAndGet();
                 } catch (BusinessException e) {
                     if (e.getErrorCode() == CouponErrorCode.COUPON_ALREADY_ISSUED) {
                         alreadyIssuedCount.incrementAndGet();
@@ -148,7 +152,6 @@ class CouponConcurrencyTest {
         // Then: 1번만 성공, 나머지 9번은 중복 발급 예외
         assertThat(successCount.get()).isEqualTo(1);
         assertThat(alreadyIssuedCount.get()).isEqualTo(threadCount - 1);
-
 
         var userCoupons = userCouponRepository.findByUserId(userId);
         assertThat(userCoupons).hasSize(1);

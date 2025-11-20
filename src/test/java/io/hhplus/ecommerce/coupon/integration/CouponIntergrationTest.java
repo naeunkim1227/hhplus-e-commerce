@@ -86,7 +86,6 @@ public class CouponIntergrationTest {
 
     @Test
     @DisplayName("선착순 쿠폰을 발급한다 - 낙관적 락을 사용하여 100명이 동시에 요청했을때 10명만 성공한다.")
-    @Tag("concurrency")
     void issueCouponConcurrency() throws InterruptedException {
         // given: 별도 트랜잭션으로 쿠폰 저장하여 커밋 보장
         int issuedCoupontCount = 10;
