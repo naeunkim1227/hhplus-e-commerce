@@ -2,6 +2,7 @@ package io.hhplus.ecommerce.cart.infrastructure.inmemory;
 
 import io.hhplus.ecommerce.cart.domain.entity.CartItem;
 import io.hhplus.ecommerce.cart.domain.repository.CartRepository;
+import io.hhplus.ecommerce.cart.domain.vo.CartItemWithProduct;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
@@ -56,6 +57,11 @@ public class InMemoryCartRepository implements CartRepository {
         return store.values().stream()
                 .filter(cartItem -> cartItem.getUserId().equals(userId))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CartItemWithProduct> findByUserIdWithProduct(Long userId) {
+        return List.of();
     }
 
     @Override

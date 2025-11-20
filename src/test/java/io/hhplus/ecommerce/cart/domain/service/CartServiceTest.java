@@ -210,7 +210,7 @@ public class CartServiceTest {
                 .willReturn(Optional.of(existingCartItem));
 
         // When
-        cartService.deleteCartItem(command);
+        cartService.deleteCartItem(1L ,cartItemId);
         // Then
         verify(cartRepository, times(1)).findById(cartItemId);
         verify(cartRepository, times(1)).deleteById(cartItemId);

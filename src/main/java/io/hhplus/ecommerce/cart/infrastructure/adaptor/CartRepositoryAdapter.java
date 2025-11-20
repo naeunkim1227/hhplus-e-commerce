@@ -2,6 +2,7 @@ package io.hhplus.ecommerce.cart.infrastructure.adaptor;
 
 import io.hhplus.ecommerce.cart.domain.entity.CartItem;
 import io.hhplus.ecommerce.cart.domain.repository.CartRepository;
+import io.hhplus.ecommerce.cart.domain.vo.CartItemWithProduct;
 import io.hhplus.ecommerce.cart.infrastructure.jpa.JpaCartRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
@@ -36,6 +37,9 @@ public class CartRepositoryAdapter implements CartRepository {
     public List<CartItem> findByUserId(Long userId) {
         return jpaCartRepository.findByUserId(userId);
     }
+
+    @Override
+    public List<CartItemWithProduct> findByUserIdWithProduct(Long userId) {return jpaCartRepository.findByUserIdWithProduct(userId);}
 
     @Override
     public Optional<CartItem> findByUserIdAndProductId(Long userId, Long productId) {
