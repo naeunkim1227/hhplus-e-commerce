@@ -17,8 +17,8 @@ public interface JpaProductRepository extends JpaRepository<Product, Long> {
     @Query(value = """
         SELECT p.*
         FROM products p
-        INNER JOIN orders o ON oi.order_id = o.id
         INNER JOIN order_items oi ON p.id = oi.product_id
+        INNER JOIN orders o ON oi.order_id = o.id
         WHERE  o.ordered_at >= :startDate
           AND o.status = 'PAYMENT_COMPLETED'
         GROUP BY p.id
