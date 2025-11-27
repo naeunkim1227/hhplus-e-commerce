@@ -28,6 +28,9 @@ public class Product {
     private BigDecimal price;
     private Long stock;
 
+    @Column(nullable = false)
+    private int likeCount = 0;
+
     @Enumerated(EnumType.STRING)
     private ProductStatus status;
 
@@ -104,5 +107,14 @@ public class Product {
             throw new BusinessException(ProductErrorCode.INVALID_QUANTITY, "재고는 0 이상이어야 합니다");
         }
     }
+
+    public void updateLikeCount(int likeCount) {
+        if (likeCount <= 0) {
+            throw new BusinessException(ProductErrorCode.INVALID_QUANTITY);
+        }
+        this.likeCount = likeCount;
+    }
+
+
 
 }

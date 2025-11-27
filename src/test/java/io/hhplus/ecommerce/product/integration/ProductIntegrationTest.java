@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.math.BigDecimal;
@@ -53,6 +54,10 @@ class ProductIntegrationTest {
 
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
 
 
     @Test
@@ -91,7 +96,8 @@ class ProductIntegrationTest {
                 () -> assertThat(createdProduct.getId()).isNotNull(),
                 () -> assertThat(createdProduct.getPrice()).isEqualByComparingTo(new BigDecimal("4500")),
                 () -> assertThat(createdProduct.getStock()).isEqualTo(100L),
-                () -> assertThat(selectedProduct.getName()).isEqualTo("꿀아메리카노2")
+                () -> assertThat(selectedProduct.getName()).isEqualTo("꿀아메리카노2"),
+                () -> assertThat(selectedProduct.getLikeCount()).isEqualTo(0)
         );
     }
 
@@ -226,6 +232,23 @@ class ProductIntegrationTest {
 
         assertThat(updateProduct.getPrice()).isEqualByComparingTo(BigDecimal.valueOf(5000));
     }
+
+    @Test
+    @DisplayName("좋아요 기능을 수행한다.")
+    void increaseLikeCount(){
+        ProductCreateCommand command  = createCommand("꿀아메리카노2", 4500, 100L);
+        ProductDto createdProduct = productCreateUseCase.execute(command);
+
+        productService.increaseLikeCount(createdProduct.getId());
+
+        String countKey = "like:count:" + createdProduct.getId();
+        String count = redisTemplate.opsForValue().get(countKey);
+
+        assertThat(count).isEqualTo("2");
+
+    }
+
+
 
     private ProductCreateCommand createCommand(String name, int price, Long stock) {
         return ProductCreateCommand.builder()

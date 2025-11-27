@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,8 @@ import java.util.List;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final RedisTemplate<String, String> redisTemplate;
+
 
     /**
      * 상품 ID로 상품 조회 - 캐시 적용
@@ -59,8 +62,6 @@ public class ProductService {
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
-
-
     /**
      * 최근 N일 동안 가장 판매량이 많은 상품 조회 - 캐시 적용
      */
@@ -124,5 +125,34 @@ public class ProductService {
 
         return productRepository.save(updatedProduct);
     }
+
+
+    public int getLikeCount(Long productId) {
+        String countKey = "like:count:" + productId;
+        String count = redisTemplate.opsForValue().get(countKey);
+
+        if (count != null) {
+            return Integer.parseInt(count);
+        }
+
+        Product product = getProduct(productId);
+        int dbLikeCount = product.getLikeCount();
+
+        redisTemplate.opsForValue().set(countKey, String.valueOf(dbLikeCount));
+        return dbLikeCount;
+    }
+
+    public void increaseLikeCount(Long productId) {
+        redisTemplate.opsForValue().increment("like:count:" + productId);
+
+    }
+
+    public void decreaseLikeCount(Long productId) {
+        redisTemplate.opsForValue().decrement("like:count:" + productId);
+
+    }
+
+
+
 
 }

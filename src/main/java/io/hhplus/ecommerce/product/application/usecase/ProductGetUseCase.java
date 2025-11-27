@@ -15,6 +15,7 @@ public class ProductGetUseCase {
      */
     public ProductDto execute(Long productId) {
         Product product = productService.getProduct(productId);
-        return ProductDto.from(product);
+        int likeCount = productService.getLikeCount(productId);  // Redis 직접
+        return ProductDto.from(product,likeCount);
     }
 }

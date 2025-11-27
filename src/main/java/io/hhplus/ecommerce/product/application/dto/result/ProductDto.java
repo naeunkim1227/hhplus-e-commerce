@@ -22,8 +22,21 @@ public class ProductDto {
     private BigDecimal price;
     private Long stock;
     private String status;
+    private int likeCount;
 
     // Entity > DTO
+    public static ProductDto from(Product product,int likeCount) {
+        return ProductDto.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .price(product.getPrice())
+                .stock(product.getStock())
+                .status(product.getStatus().name())
+                .likeCount(likeCount)
+                .build();
+    }
+
+
     public static ProductDto from(Product product) {
         return ProductDto.builder()
                 .id(product.getId())
