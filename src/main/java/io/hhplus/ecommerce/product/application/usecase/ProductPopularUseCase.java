@@ -22,7 +22,7 @@ public class ProductPopularUseCase {
      */
     public List<ProductDto> execute(ProductPopularCommand command) {
         //검색 조건 검증
-        productValidator.validate(command.getDays());
+        productValidator.searchCondition(command.getDays());
 
         List<Product> products = productService.getPopularProducts(command);
         return products.stream()

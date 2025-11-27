@@ -11,19 +11,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class ProductValidator {
 
-
-    public void validate(int days) {
-        validateSearchCondition(days);
-    }
     /**
-     * 추가하려는 카트의 소유자인지 확인
+     * 조회 조건
      */
-    public void validateSearchCondition(int days){
+    public void searchCondition(int days){
         if(days > ProductPolicy.MAX_SEARCH_DAY){
             throw new BusinessException(ProductErrorCode.SEARCH_CONDITION_LIMIT);
         }
     }
-
-
 
 }
