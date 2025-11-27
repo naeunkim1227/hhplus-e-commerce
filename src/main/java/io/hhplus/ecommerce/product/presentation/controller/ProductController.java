@@ -90,11 +90,10 @@ public class ProductController {
         return CommonResponse.success(ProductResponse.from(ProductDto.from(updatedProduct)));
     }
 
-
-
-
-
-
-
+    @PostMapping("/like/{productId}")
+    public CommonResponse<ProductResponse> likeProduct(@PathVariable Long productId){
+        productService.increaseLikeCount(productId);
+        return CommonResponse.success();
+    }
 
 }

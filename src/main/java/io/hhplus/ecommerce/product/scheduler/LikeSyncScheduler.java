@@ -23,8 +23,7 @@ public class LikeSyncScheduler {
     /**
      * 좋아요 동기화 - 6시간마다
      */
-//    @Scheduled(fixedRate = 21600000)  // 6시간 = 6 * 60 * 60 * 1000
-    @Scheduled(fixedRate = 21600)  // 6시간 = 6 * 60 * 60 * 1000
+    @Scheduled(fixedRate = 21600000)  // 6시간 = 6 * 60 * 60 * 1000
     @Transactional
     public void syncLikeDB() {
         log.info("좋아요 증분 동기화 시작");

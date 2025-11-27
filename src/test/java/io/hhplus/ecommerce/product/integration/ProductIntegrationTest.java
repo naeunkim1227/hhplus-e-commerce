@@ -34,7 +34,7 @@ import static org.mockito.BDDMockito.given;
 
 @SpringBootTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import(TestContainerConfig.class)
+// @Import(TestContainerConfig.class)  // 로컬 도커 사용 시 주석 처리
 @DisplayName("Product 통합 테스트 - UseCase + Service + Repository + DB")
 class ProductIntegrationTest {
 
@@ -240,12 +240,10 @@ class ProductIntegrationTest {
         ProductDto createdProduct = productCreateUseCase.execute(command);
 
         productService.increaseLikeCount(createdProduct.getId());
-
         String countKey = "like:count:" + createdProduct.getId();
         String count = redisTemplate.opsForValue().get(countKey);
 
         assertThat(count).isEqualTo("2");
-
     }
 
 
