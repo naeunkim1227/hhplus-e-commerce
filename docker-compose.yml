@@ -22,4 +22,23 @@ services:
      --innodb-lock-wait-timeout=50
      --wait-timeout=28800
      --interactive-timeout=28800
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: ecommerce-redisinsight
+    ports:
+      - "5540:5540"
+
+volumes:
+  mysql_data:
+  redis_data:
+
 

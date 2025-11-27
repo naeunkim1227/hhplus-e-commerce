@@ -3,6 +3,7 @@ package io.hhplus.ecommerce.config;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -13,6 +14,7 @@ import org.testcontainers.utility.DockerImageName;
 public class TestContainerConfig {
 
     private static final MySQLContainer<?> MYSQL_CONTAINER;
+    private static final GenericContainer<?> REDIS_CONTAINER;
 
     static {
         MYSQL_CONTAINER = new MySQLContainer<>(DockerImageName.parse("mysql:8.0"))
@@ -21,11 +23,27 @@ public class TestContainerConfig {
                 .withPassword("test")
                 .withReuse(true);  // 컨테이너 재사용으로 속도 향상
         MYSQL_CONTAINER.start();
+
+
+        //redis 설정
+        REDIS_CONTAINER = new GenericContainer<>(DockerImageName.parse("redis:7-alpine"))
+                .withExposedPorts(6379)
+                .withReuse(true);
+        REDIS_CONTAINER.start();
+
+        // Redis 연결 정보를 시스템 프로퍼티로 설정
+        System.setProperty("spring.data.redis.host", REDIS_CONTAINER.getHost());
+        System.setProperty("spring.data.redis.port", REDIS_CONTAINER.getMappedPort(6379).toString());
     }
 
     @Bean
     @ServiceConnection
     public MySQLContainer<?> mysqlContainer() {
         return MYSQL_CONTAINER;
+    }
+
+    @Bean
+    public GenericContainer<?> redisContainer() {
+        return REDIS_CONTAINER;
     }
 }
