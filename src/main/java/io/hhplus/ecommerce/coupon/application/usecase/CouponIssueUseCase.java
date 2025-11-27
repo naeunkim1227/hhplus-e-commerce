@@ -12,7 +12,6 @@ public class CouponIssueUseCase {
 
     private final CouponService couponService;
 
-    @Transactional
     public UserCoupon execute(Long userId, Long couponId) {
         return couponService.issueCoupon(userId, couponId);
     }

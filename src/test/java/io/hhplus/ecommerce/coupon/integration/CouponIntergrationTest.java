@@ -6,6 +6,7 @@ import io.hhplus.ecommerce.coupon.application.usecase.CouponIssueUseCase;
 import io.hhplus.ecommerce.coupon.domain.entity.Coupon;
 import io.hhplus.ecommerce.coupon.domain.entity.CouponStatus;
 import io.hhplus.ecommerce.coupon.domain.entity.CouponType;
+import io.hhplus.ecommerce.coupon.domain.entity.UserCoupon;
 import io.hhplus.ecommerce.coupon.infrastructure.repositoty.jpa.JpaCouponRepository;
 import io.hhplus.ecommerce.coupon.infrastructure.repositoty.jpa.JpaUserCouponRepository;
 import org.junit.jupiter.api.*;
@@ -18,6 +19,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -85,10 +87,10 @@ public class CouponIntergrationTest {
 
 
     @Test
-    @DisplayName("선착순 쿠폰을 발급한다 - 낙관적 락을 사용하여 100명이 동시에 요청했을때 10명만 성공한다.")
+    @DisplayName("선착순 쿠폰을 발급한다 - 분산락을 사용하여 300명이 동시에 요청했을때 100명만 성공한다.")
     void issueCouponConcurrency() throws InterruptedException {
-        // given: 별도 트랜잭션으로 쿠폰 저장하여 커밋 보장
-        int issuedCoupontCount = 10;
+        // given
+        int issuedCoupontCount = 100;
 
         testCoupon = Coupon.builder()
                 .code("TEST")
@@ -104,68 +106,42 @@ public class CouponIntergrationTest {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        // 별도 트랜잭션으로 쿠폰 저장 (커밋 보장)
         Long couponId = transactionTemplate.execute(status -> {
             Coupon created = couponRepository.save(testCoupon);
             return created.getId();
         });
 
-        // 저장된 쿠폰 확인
-        Optional<Coupon> check = couponRepository.findById(couponId);
-
         int threadCount = 300;
-
         ExecutorService executorService = newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(threadCount);
 
-        // when: 100명이 동시에 쿠폰 발급 요청 (재시도 로직 포함)
-        long startTime = System.currentTimeMillis();
-
+        // when: 100명이 동시에 쿠폰 발급 요청
         for (int i = 0; i < threadCount; i++) {
             long userId = i + 1;
             executorService.submit(() -> {
-                boolean issued = false;
-                retryIssueCoupon(userId, couponId, issued, 0);
-                latch.countDown();
+                try {
+                    couponIssueUseCase.execute(userId, couponId);
+                } catch (Exception e) {
+                } finally {
+                    latch.countDown();
+                }
             });
         }
 
-
         latch.await();
-
         executorService.shutdown();
 
         // then
-        Coupon result = couponRepository.findById(couponId).orElseThrow();
+        Coupon coupon = couponRepository.findById(couponId).orElseThrow();
+        List<UserCoupon> userCoupons = userCouponRepository.findByCouponId(couponId);
 
         Assertions.assertAll(
                 "선착순 쿠폰 검증",
-                () -> assertThat(successCount.get()).isEqualTo(issuedCoupontCount),
-                () -> assertThat(result.getIssuedQuantity()).isEqualTo(issuedCoupontCount)
+                () -> assertThat(userCoupons).hasSize(issuedCoupontCount),
+                () -> assertThat(coupon.getIssuedQuantity()).isEqualTo(issuedCoupontCount)
         );
     }
 
-    private void retryIssueCoupon(Long userId, Long couponId, boolean issued, int tryCount) {
-        int maxRetries = 5;
-
-        if(!issued && tryCount < maxRetries){
-            try {
-                couponIssueUseCase.execute(userId, couponId);
-                successCount.incrementAndGet();
-                issued = true;
-                return;
-            }catch (ObjectOptimisticLockingFailureException e) {
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e1) {
-                    e1.printStackTrace();
-                }
-                retryIssueCoupon(userId, couponId ,false, tryCount + 1);
-            }catch (Exception e) {
-                return;
-            }
-        }
-    }
 
 
 }

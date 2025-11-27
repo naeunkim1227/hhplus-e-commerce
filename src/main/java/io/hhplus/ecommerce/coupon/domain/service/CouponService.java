@@ -1,6 +1,7 @@
 package io.hhplus.ecommerce.coupon.domain.service;
 
 import io.hhplus.ecommerce.common.exception.BusinessException;
+import io.hhplus.ecommerce.common.lock.DistributedLock;
 import io.hhplus.ecommerce.coupon.domain.entity.Coupon;
 import io.hhplus.ecommerce.coupon.domain.entity.UserCoupon;
 import io.hhplus.ecommerce.coupon.domain.exception.CouponErrorCode;
@@ -9,6 +10,7 @@ import io.hhplus.ecommerce.coupon.domain.repository.UserCouponRepository;
 import io.hhplus.ecommerce.coupon.domain.validator.CouponValidator;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -70,18 +72,16 @@ public class CouponService {
         return discountAmount;
     }
 
-    /**
-     * 쿠폰 발급 (선착순)
-     */
+    @DistributedLock(key = "'coupon:stock:' + #couponId", waitTime = 3, leaseTime = 0.5)
     @Transactional
     public UserCoupon issueCoupon(Long userId, Long couponId) {
-        Coupon coupon = couponRepository.findByIdForUpdate(couponId)
-                .orElseThrow(() -> new BusinessException(CouponErrorCode.COUPON_NOT_FOUND));
-
         userCouponRepository.findByUserIdAndCouponId(userId, couponId)
                 .ifPresent(c -> {
                     throw new BusinessException(CouponErrorCode.COUPON_ALREADY_ISSUED);
                 });
+
+        Coupon coupon = couponRepository.findById(couponId)
+                .orElseThrow(() -> new BusinessException(CouponErrorCode.COUPON_NOT_FOUND));
 
         coupon.isAvailableIssue();
         coupon.increaseIssuedQuantity();
