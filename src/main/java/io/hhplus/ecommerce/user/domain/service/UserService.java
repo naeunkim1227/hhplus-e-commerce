@@ -1,6 +1,7 @@
 package io.hhplus.ecommerce.user.domain.service;
 
 import io.hhplus.ecommerce.common.exception.BusinessException;
+import io.hhplus.ecommerce.common.lock.DistributedLock;
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.user.application.dto.command.UserCreateCommand;
 import io.hhplus.ecommerce.user.domain.entity.User;
@@ -35,13 +36,9 @@ public class UserService {
     }
 
     /**
-     * 잔액 차감 (낙관적 락 + 재시도)
+     * 잔액 차감 - 분산락 적용
      */
-    @Retryable(
-        value = {org.springframework.orm.ObjectOptimisticLockingFailureException.class},
-        maxAttempts = 5,
-        backoff = @Backoff(delay = 100)
-    )
+    @DistributedLock(key = "'user:balance:' + #userId")
     @Transactional
     public void reduceBalance(Long userId, BigDecimal amount) {
         User user = this.getUser(userId);
@@ -49,6 +46,10 @@ public class UserService {
         userRepository.save(user);
     }
 
+    /**
+     * 잔액 충전 - 분산락 적용
+     */
+    @DistributedLock(key = "'user:balance:' + #userId")
     @Transactional(readOnly = false)
     public void increaseBalance(Long userId, BigDecimal amount) {
         User user = this.getUser(userId);

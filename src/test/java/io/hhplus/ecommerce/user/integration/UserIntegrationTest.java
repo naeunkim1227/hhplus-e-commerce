@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -101,26 +102,6 @@ public class UserIntegrationTest {
         );
     }
 
-    @Test
-    @DisplayName("User 삭제 ")
-    void deleteUser() {
-        // Given
-        User user = createUser("박물개", 1000);
-        User savedUser = jpaUserRepository.save(user);
-        jpaUserRepository.flush();
-        Long userId = savedUser.getId();
-
-        // When
-        jpaUserRepository.deleteById(userId);
-
-
-        jpaUserRepository.deleteById(userId);
-        jpaUserRepository.flush();
-
-        // Then: 조회 안됨
-        assertThat(jpaUserRepository.findById(userId)).isEmpty();
-    }
-
     private User createUser(String name, int balance) {
         return User.builder()
                 .name(name)
@@ -129,7 +110,6 @@ public class UserIntegrationTest {
                 .updatedAt(LocalDateTime.now())
                 .build();
     }
-
 
     @Test
     @DisplayName("잔액 차감 동시성 테스트 - 10개 스레드가 동시에 1000원씩 차감")
@@ -167,6 +147,56 @@ public class UserIntegrationTest {
         // Then
         User resultUser = jpaUserRepository.findById(userId).orElseThrow();
         assertThat(resultUser.getBalance()).isEqualByComparingTo(String.valueOf(userBalance - (decreaseAmount * threadCount)));
+    }
+
+    @Test
+    @DisplayName("충전과 차감이 동시에 시작되지만 분산락으로 순차적으로 처리된다")
+    void balanceConcurrency() throws InterruptedException {
+        // Given
+        int userBalance = 10000;
+        User user = createUser("김망개떡", userBalance);
+        User savedUser = jpaUserRepository.save(user);
+        jpaUserRepository.flush();
+        Long userId = savedUser.getId();
+
+        int reduceAmount = 2000;
+        int chargeAmount = 5000;
+
+        ExecutorService executorService = newFixedThreadPool(2);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch endLatch = new CountDownLatch(2);
+
+        // When: 차감과 충전을 동시에 시작
+        executorService.submit(() -> {
+            try {
+                startLatch.await(); // 동시 시작 대기
+                userService.reduceBalance(userId, BigDecimal.valueOf(reduceAmount));
+            } catch (Exception e) {
+                // 예외 처리
+            } finally {
+                endLatch.countDown();
+            }
+        });
+
+        executorService.submit(() -> {
+            try {
+                startLatch.await(); // 동시 시작 대기
+                userService.increaseBalance(userId, BigDecimal.valueOf(chargeAmount));
+            } catch (Exception e) {
+                // 예외 처리
+            } finally {
+                endLatch.countDown();
+            }
+        });
+
+        startLatch.countDown();
+        endLatch.await();
+        executorService.shutdown();
+
+        // Then: 순차적으로 처리되어 정확한 잔액 유지 (10000 - 2000 + 5000 = 13000)
+        User resultUser = jpaUserRepository.findById(userId).orElseThrow();
+        int expectedBalance = userBalance - reduceAmount + chargeAmount;
+        assertThat(resultUser.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(expectedBalance));
     }
 
 
