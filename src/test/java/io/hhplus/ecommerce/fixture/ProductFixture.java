@@ -18,7 +18,7 @@ public class ProductFixture {
         return Product.builder()
                 .name("프레첼")
                 .price(new BigDecimal("129000"))
-                .stock(150L)
+                .stock(2L)
                 .status(ProductStatus.ACTIVE)
                 .version(0L)
                 .createdAt(DEFAULT_TIMESTAMP)

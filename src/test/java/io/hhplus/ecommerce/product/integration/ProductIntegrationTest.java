@@ -40,7 +40,7 @@ class ProductIntegrationTest {
     private ProductListUseCase productListUseCase;
 
     @Autowired
-    private ProductGetUseCase ProductGetUseCase;
+    private ProductGetUseCase productGetUseCase;
 
     @Autowired
     private ProductPopularUseCase productPopularUseCase;
@@ -72,19 +72,19 @@ class ProductIntegrationTest {
     @DisplayName("상품 생성 및 조회")
     void createAndGetProduct() {
         // Given
-        ProductCreateCommand command  = createCommand("꿀아메리카노", 4500, 100L);
+        ProductCreateCommand command  = createCommand("꿀아메리카노2", 4500, 100L);
 
         // When
         ProductDto createdProduct = productCreateUseCase.execute(command);
 
         // Then
-        ProductDto selectedProduct = ProductGetUseCase.execute(createdProduct.getId());
+        ProductDto selectedProduct = productGetUseCase.execute(createdProduct.getId());
         Assertions.assertAll(
                 "상품 생성 검증",
                 () -> assertThat(createdProduct.getId()).isNotNull(),
                 () -> assertThat(createdProduct.getPrice()).isEqualByComparingTo(new BigDecimal("4500")),
                 () -> assertThat(createdProduct.getStock()).isEqualTo(100L),
-                () -> assertThat(selectedProduct.getName()).isEqualTo("꿀아메리카노")
+                () -> assertThat(selectedProduct.getName()).isEqualTo("꿀아메리카노2")
         );
     }
 
@@ -118,7 +118,7 @@ class ProductIntegrationTest {
         Long notExistProductId = 99999L;
 
         // When/Then
-        assertThatThrownBy(() -> ProductGetUseCase.execute(notExistProductId))
+        assertThatThrownBy(() -> productGetUseCase.execute(notExistProductId))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ProductErrorCode.PRODUCT_NOT_FOUND.getMessage());
     }

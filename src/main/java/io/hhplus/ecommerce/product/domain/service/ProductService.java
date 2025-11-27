@@ -1,6 +1,8 @@
 package io.hhplus.ecommerce.product.domain.service;
 
+import io.hhplus.ecommerce.common.config.CacheType;
 import io.hhplus.ecommerce.common.exception.BusinessException;
+import io.hhplus.ecommerce.common.lock.DistributedLock;
 import io.hhplus.ecommerce.product.application.dto.command.ProductCreateCommand;
 import io.hhplus.ecommerce.product.application.dto.command.ProductPopularCommand;
 import io.hhplus.ecommerce.product.domain.entity.Product;
@@ -8,7 +10,10 @@ import io.hhplus.ecommerce.product.domain.exception.ProductErrorCode;
 import io.hhplus.ecommerce.product.domain.repository.ProductRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -21,9 +26,10 @@ public class ProductService {
     private final ProductRepository productRepository;
 
     /**
-     * 상품 ID로 상품 조회
+     * 상품 ID로 상품 조회 - 캐시 적용
      */
-    @Transactional
+    @Cacheable(cacheNames = CacheType.Names.PRODUCTS, key = "#productId")
+    @Transactional(readOnly = true)
     public Product getProduct(Long productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ProductErrorCode.PRODUCT_NOT_FOUND));
@@ -55,8 +61,9 @@ public class ProductService {
 
 
     /**
-     * 최근 N일 동안 가장 판매량이 많은 상품 조회
+     * 최근 N일 동안 가장 판매량이 많은 상품 조회 - 캐시 적용
      */
+    @Cacheable(cacheNames = CacheType.Names.POPULAR_PRODUCTS, key = "#command.days + '_' + #command.limit")
     public List<Product> getPopularProducts(@Valid ProductPopularCommand command) {
         LocalDateTime startDate = java.time.LocalDateTime.now().minusDays(command.getDays());
         return productRepository.findPopularProducts(startDate, command.getLimit());
@@ -72,11 +79,10 @@ public class ProductService {
     }
 
     /**
-     * 재고 차감 (조건부 UPDATE로 동시성 제어)
-     * @param productId 상품 ID
-     * @param quantity 차감할 수량
+     * 재고 차감 - 분산락 적용
      */
-    @Transactional
+    @DistributedLock(key = "'product:stock:' + #productId" , waitTime = 5, leaseTime = 10)
+    @Transactional(propagation = Propagation.REQUIRES_NEW,  timeout = 8 )
     public void decreaseStock(Long productId, int quantity) {
         int updated = productRepository.decreaseStock(productId, quantity);
         if (updated == 0) {

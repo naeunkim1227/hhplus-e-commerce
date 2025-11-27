@@ -14,8 +14,10 @@ import io.hhplus.ecommerce.coupon.infrastructure.repositoty.jpa.JpaUserCouponRep
 import io.hhplus.ecommerce.fixture.CouponFixture;
 import io.hhplus.ecommerce.fixture.ProductFixture;
 import io.hhplus.ecommerce.fixture.UserFixture;
+import io.hhplus.ecommerce.order.application.dto.command.OrderCreateDirectCommand;
 import io.hhplus.ecommerce.order.application.dto.command.OrderCreateFromCartCommand;
 import io.hhplus.ecommerce.order.application.dto.result.OrderDto;
+import io.hhplus.ecommerce.order.application.usecase.OrderCreateDirectUseCase;
 import io.hhplus.ecommerce.order.application.usecase.OrderCreateFromCartUseCase;
 import io.hhplus.ecommerce.order.application.usecase.OrderGetUseCase;
 import io.hhplus.ecommerce.order.infrastructure.repositoty.jpa.JpaOrderRepository;
@@ -37,6 +39,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -52,6 +57,9 @@ public class OrderIntegrationTest {
 
     @Autowired
     private OrderCreateFromCartUseCase orderCreateFromCartUseCase;
+
+    @Autowired
+    private OrderCreateDirectUseCase orderCreateDirectUseCase;
 
     @Autowired
     private JpaUserRepository jpaUserRepository;
@@ -135,8 +143,17 @@ public class OrderIntegrationTest {
                         .userId(savedUser.getId())
                         .cartItemIds(List.of(savedCartItem.getId()))
                         .build();
+        OrderCreateFromCartCommand command2 =
+                OrderCreateFromCartCommand.builder()
+                        .userId(savedUser.getId())
+                        .cartItemIds(List.of(savedCartItem.getId()))
+                        .build();
+
+
+
         //When
         OrderDto orderDto = orderCreateFromCartUseCase.excute(command);
+        OrderDto orderDto1 = orderCreateFromCartUseCase.excute(command);
 
         //Then
         Assertions.assertAll(
@@ -174,7 +191,6 @@ public class OrderIntegrationTest {
                 .divide(BigDecimal.valueOf(100), RoundingMode.DOWN);
 
         //Then
-
         Assertions.assertAll(
                 "쿠폰 사용 주문 생성 검증",
                 () -> assertThat(orderDto).isNotNull(),
@@ -286,5 +302,63 @@ public class OrderIntegrationTest {
                         .isEqualTo(savedCartItem.getQuantity())
         );
     }
+
+    @Test
+    @DisplayName("재고가 2개 남은 상품을 동시에 10명이 주문한다.")
+    void createOrderConcurrecy() throws InterruptedException {
+        // given
+        Product product = Product.builder()
+                .name("요구르트")
+                .price(new BigDecimal("1290"))
+                .stock(10L)
+                .status(ProductStatus.ACTIVE)
+                .version(0L)
+                .build();
+        Product newProduct = jpaProductRepository.save(product);
+        jpaProductRepository.flush();
+
+        final Long productId = newProduct.getId();  // ← final로 고정
+
+        int threadCount = 100;
+        ExecutorService executorService = Executors.newFixedThreadPool(32);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        //When
+        for (int i = 0; i < threadCount; i++) {
+            final long userId = i;
+            int finalI = i;
+            executorService.submit(() -> {
+                try {
+                    User user = User.builder()
+                            .name("이뿌꾸" + finalI)
+                            .balance(BigDecimal.valueOf(1000000))
+                            .build();
+                    user = jpaUserRepository.saveAndFlush(user);
+
+                    OrderCreateDirectCommand command = OrderCreateDirectCommand.builder()
+                            .userId(user.getId())
+                            .quantity(1)
+                            .productId(productId)
+                            .build();
+                    orderCreateDirectUseCase.excute(command);
+                } catch (Exception e) {
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        executorService.shutdown();
+
+        //Then
+        Product result = jpaProductRepository.findById(productId).orElseThrow();
+        Assertions.assertAll(
+                "동시성 주문 생성 검증",
+                () -> assertThat(result.getStock()).isEqualTo(0L)
+        );
+    }
+
+
 
 }
