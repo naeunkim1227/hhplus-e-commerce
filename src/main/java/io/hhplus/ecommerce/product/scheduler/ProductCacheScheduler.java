@@ -19,7 +19,7 @@ public class ProductCacheScheduler {
     private final CacheManager cacheManager;
 
     // 인기상품 캐시 갱신 - 10분마다
-    @Scheduled(fixedRate = 10000)
+    @Scheduled(fixedRate = 600000)
     public void refreshPopularProductsCache() {
         log.info("인기상품 캐시 갱신 시작");
         try {
