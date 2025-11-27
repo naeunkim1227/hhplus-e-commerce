@@ -5,6 +5,7 @@ import io.hhplus.ecommerce.common.exception.BusinessException;
 import io.hhplus.ecommerce.common.lock.DistributedLock;
 import io.hhplus.ecommerce.product.application.dto.command.ProductCreateCommand;
 import io.hhplus.ecommerce.product.application.dto.command.ProductPopularCommand;
+import io.hhplus.ecommerce.product.application.dto.command.ProductUpdateCommand;
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.exception.ProductErrorCode;
 import io.hhplus.ecommerce.product.domain.repository.ProductRepository;
@@ -51,10 +52,10 @@ public class ProductService {
         }
     }
 
-
     /**
      * 모든 상품 조회
      */
+    @Cacheable(cacheNames = CacheType.Names.PRODUCTS, key = "'all'")
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
@@ -98,6 +99,30 @@ public class ProductService {
     @Transactional
     public void increaseStock(Long productId, int quantity) {
         productRepository.increaseStock(productId, quantity);
+    }
+
+    /**
+     * 상품 정보 수정 - 각 필드 선택적 업데이트
+     */
+    @CacheEvict(cacheNames = CacheType.Names.PRODUCTS, allEntries = true)
+    @Transactional
+    public Product updateProduct(ProductUpdateCommand command) {
+        Product product = this.getProduct(command.getProductId());
+
+        // 상품 정보 업데이트 (null이 아닌 필드만 업데이트)
+        Product updatedProduct = Product.builder()
+                .id(product.getId())
+                .name(command.getName() != null ? command.getName() : product.getName())
+                .price(command.getPrice() != null ? command.getPrice() : product.getPrice())
+                .stock(command.getStock() != null ? command.getStock() : product.getStock())
+                .status(command.getStatus() != null ? command.getStatus() : product.getStatus())
+                .likeCount(product.getLikeCount())
+                .version(product.getVersion())
+                .createdAt(product.getCreatedAt())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        return productRepository.save(updatedProduct);
     }
 
 }

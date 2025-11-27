@@ -3,6 +3,7 @@ package io.hhplus.ecommerce.product.integration;
 import io.hhplus.ecommerce.common.exception.BusinessException;
 import io.hhplus.ecommerce.config.TestContainerConfig;
 import io.hhplus.ecommerce.product.application.dto.command.ProductCreateCommand;
+import io.hhplus.ecommerce.product.application.dto.command.ProductUpdateCommand;
 import io.hhplus.ecommerce.product.application.dto.result.ProductDto;
 import io.hhplus.ecommerce.product.application.dto.command.ProductPopularCommand;
 import io.hhplus.ecommerce.product.application.usecase.ProductCreateUseCase;
@@ -12,6 +13,7 @@ import io.hhplus.ecommerce.product.application.usecase.ProductPopularUseCase;
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.exception.ProductErrorCode;
 
+import io.hhplus.ecommerce.product.domain.service.ProductService;
 import io.hhplus.ecommerce.product.infrastructure.repositoty.jpa.JpaProductRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -24,8 +26,10 @@ import org.springframework.test.context.jdbc.Sql;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.BDDMockito.given;
 
 @SpringBootTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -46,6 +50,9 @@ class ProductIntegrationTest {
     private ProductPopularUseCase productPopularUseCase;
     @Autowired
     private JpaProductRepository jpaProductRepository;
+
+    @Autowired
+    private ProductService productService;
 
 
     @Test
@@ -198,6 +205,28 @@ class ProductIntegrationTest {
         );
     }
 
+
+
+    @Test
+    @DisplayName("상품을 수정할 수 있고 수정 시 캐시가 만료된다.")
+    void updateProduct(){
+        // Given
+        ProductCreateCommand command  = createCommand("꿀아메리카노2", 4500, 100L);
+        ProductDto createdProduct = productCreateUseCase.execute(command);
+        ProductDto selectedProduct = productGetUseCase.execute(createdProduct.getId());
+
+        // When
+        ProductUpdateCommand updateCommand = ProductUpdateCommand.builder()
+                .productId(selectedProduct.getId())
+                .price(BigDecimal.valueOf(5000))
+                .build();
+
+        // Then
+        Product updateProduct = productService.updateProduct(updateCommand);
+
+        assertThat(updateProduct.getPrice()).isEqualByComparingTo(BigDecimal.valueOf(5000));
+    }
+
     private ProductCreateCommand createCommand(String name, int price, Long stock) {
         return ProductCreateCommand.builder()
                 .name(name)
@@ -205,4 +234,9 @@ class ProductIntegrationTest {
                 .stock(stock)
                 .build();
     }
+
+
+
+
+
 }
