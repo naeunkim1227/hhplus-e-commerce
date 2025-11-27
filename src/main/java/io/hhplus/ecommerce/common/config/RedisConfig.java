@@ -56,6 +56,15 @@ public class RedisConfig {
     //캐시 설정
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+        // ObjectMapper 설정 (LocalDateTime, Hibernate 문제 해결)
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        objectMapper.activateDefaultTyping(
+                objectMapper.getPolymorphicTypeValidator(),
+                ObjectMapper.DefaultTyping.NON_FINAL
+        );
+
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10))
                 .serializeKeysWith(
@@ -65,7 +74,7 @@ public class RedisConfig {
                 )
                 .serializeValuesWith(
                         RedisSerializationContext.SerializationPair.fromSerializer(
-                                new GenericJackson2JsonRedisSerializer()
+                                new GenericJackson2JsonRedisSerializer(objectMapper)
                         )
                 );
 
