@@ -49,6 +49,17 @@ public class OrderCreateFromCartUseCase {
         List<CartItem> decreasedItems = new ArrayList<>();
 
         try {
+            // 재고 차감 (성공한 것만 추적)
+            for (CartItem cartItem : sortedCartItems) {
+                productService.decreaseStock(cartItem.getProductId(), cartItem.getQuantity());
+                decreasedItems.add(cartItem);
+            }
+        } catch (Exception e) {
+            log.warn("재고 차감 실패 - productId: {}, error: {}");
+            throw e;  // 복구 불필요, 바로 던짐
+        }
+
+        try {
             Long orderId = orderService.getNextOrderId();
 
             List<Long> productIds = sortedCartItems.stream()
@@ -56,12 +67,6 @@ public class OrderCreateFromCartUseCase {
                     .toList();
 
             List<Product> products = productService.getProductsByIds(productIds);
-
-            // 재고 차감 (성공한 것만 추적)
-            for (CartItem cartItem : sortedCartItems) {
-                productService.decreaseStock(cartItem.getProductId(), cartItem.getQuantity());
-                decreasedItems.add(cartItem);
-            }
 
             // OrderItemInfo변환
             List<OrderItemInfo> items = sortedCartItems.stream()
