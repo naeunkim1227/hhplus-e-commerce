@@ -16,29 +16,37 @@ import org.springframework.stereotype.Component;
 public class ProductCacheScheduler {
 
     private final ProductService productService;
-    private final CacheManager cacheManager;
 
-    // 인기상품 캐시 갱신 - 10분마다
-    @Scheduled(fixedRate = 600000)
-    public void refreshPopularProductsCache() {
-        log.info("인기상품 캐시 갱신 시작");
+    // 일일 인기상품 캐시 갱신 - 10분마다
+    @Scheduled(fixedRate = 600000) // 10분 = 600,000ms
+    public void refreshDailyPopularProductsCache() {
+        log.info("일일 인기상품 캐시 갱신 시작");
         try {
-            // 기존 캐시 삭제
-            Cache cache = cacheManager.getCache(CacheType.Names.POPULAR_PRODUCTS);
-            if (cache != null) {
-                cache.clear();
-            }
-
-            // 3일 Top 10 갱신
-            ProductPopularCommand command3Days = new ProductPopularCommand(3, 10);
-            productService.getPopularProducts(command3Days);
-
-            // 7일 Top 10 갱신
-            ProductPopularCommand command7Days = new ProductPopularCommand(7, 10);
-            productService.getPopularProducts(command7Days);
-
+            productService.getPopularProductsDaily();
         } catch (Exception e) {
-            log.error("인기상품 캐시 갱신 실패", e);
+            log.error("일일 인기상품 캐시 갱신 실패", e);
+        }
+    }
+
+    // 주간 인기상품 캐시 갱신 - 1시간마다
+    @Scheduled(fixedRate = 3600000) // 1시간 = 3,600,000ms
+    public void refreshWeeklyPopularProductsCache() {
+        log.info("주간 인기상품 캐시 갱신 시작");
+        try {
+            productService.getPopularProductsWeekly();
+        } catch (Exception e) {
+            log.error("주간 인기상품 캐시 갱신 실패", e);
+        }
+    }
+
+    // 월간 인기상품 캐시 갱신 - 2시간마다
+    @Scheduled(fixedRate = 7200000) // 2시간 = 7,200,000ms
+    public void refreshMonthlyPopularProductsCache() {
+        log.info("월간 인기상품 캐시 갱신 시작");
+        try {
+            productService.getPopularProductsMonthly();
+        } catch (Exception e) {
+            log.error("월간 인기상품 캐시 갱신 실패", e);
         }
     }
 }

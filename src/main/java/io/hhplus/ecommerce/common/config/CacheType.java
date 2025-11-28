@@ -4,10 +4,7 @@ import java.time.Duration;
 
 public enum CacheType {
     PRODUCTS("products", Duration.ofHours(1)),
-    COUPONS("coupons", Duration.ofMinutes(5)),
-    POPULAR_PRODUCTS("popularProducts", Duration.ofMinutes(15)),
-    USERS("users", Duration.ofMinutes(30)),
-    ORDERS("orders", Duration.ofMinutes(10));
+    POPULAR_PRODUCTS("popularProducts", Duration.ofMinutes(15));
 
     private final String cacheName;
     private final Duration ttl;
@@ -22,9 +19,6 @@ public enum CacheType {
 
     public static class Names {
         public static final String PRODUCTS = "products";
-        public static final String COUPONS = "coupons";
         public static final String POPULAR_PRODUCTS = "popularProducts";
-        public static final String USERS = "users";
-        public static final String ORDERS = "orders";
     }
 }

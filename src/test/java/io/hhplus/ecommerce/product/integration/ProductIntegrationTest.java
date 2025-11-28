@@ -18,6 +18,8 @@ import io.hhplus.ecommerce.product.infrastructure.repositoty.jpa.JpaProductRepos
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,11 +28,17 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -38,6 +46,7 @@ import static org.mockito.BDDMockito.given;
 @DisplayName("Product 통합 테스트 - UseCase + Service + Repository + DB")
 class ProductIntegrationTest {
 
+    private static final Logger log = LoggerFactory.getLogger(ProductIntegrationTest.class);
     @Autowired
     private ProductCreateUseCase productCreateUseCase;
 
@@ -193,7 +202,6 @@ class ProductIntegrationTest {
         // Given
         List<Product> allProducts = jpaProductRepository.findAll();
 
-
         ProductPopularCommand command = ProductPopularCommand.builder()
                 .days(30)
                 .limit(3)
@@ -210,7 +218,6 @@ class ProductIntegrationTest {
                 () -> assertThat(popularProducts.size()).isLessThanOrEqualTo(3)
         );
     }
-
 
 
     @Test
@@ -247,6 +254,91 @@ class ProductIntegrationTest {
     }
 
 
+    @Test
+    @Sql(scripts = {
+            "/sql/cleanup.sql",
+            "/sql/test_users.sql",
+            "/sql/test_products.sql",
+            "/sql/test_coupons.sql",
+            "/sql/test_user_coupons.sql",
+            "/sql/test_orders.sql"
+    }, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @DisplayName("일간 인기 상품을 조회한다")
+    void getPopularProductsDaily_WithRealOrderData() {
+        // When
+        List<Product> result = productService.getPopularProductsDaily();
+
+        // Then:
+        Assertions.assertAll(
+                "일간 인기 상품  검증",
+                () -> assertThat(result).isNotNull(),
+                () -> assertThat(result.size()).isLessThanOrEqualTo(100),
+                () -> {
+                    System.out.println("일간 인기 상품 수: " + result.size());
+                    result.forEach(p ->
+                        System.out.println("상품 ID: " + p.getId() + ", 이름: " + p.getName())
+                    );
+                }
+        );
+    }
+
+    @Test
+    @Sql(scripts = {
+            "/sql/cleanup.sql",
+            "/sql/test_users.sql",
+            "/sql/test_products.sql",
+            "/sql/test_coupons.sql",
+            "/sql/test_user_coupons.sql",
+            "/sql/test_orders.sql"
+    }, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @DisplayName("주간 인기 상품을 조회한다")
+    void getPopularProductsWeekly_WithRealOrderData() {
+        // When:
+        List<Product> result = productService.getPopularProductsWeekly();
+
+        // Then
+        Assertions.assertAll(
+                "주간 인기 상품 조회 검증",
+                () -> assertThat(result).isNotNull(),
+                () -> assertThat(result.size()).isLessThanOrEqualTo(100),
+                () -> {
+                    System.out.println("주간 인기 상품 수: " + result.size());
+                    result.forEach(p ->
+                        System.out.println("상품 ID: " + p.getId() + ", 이름: " + p.getName())
+                    );
+                }
+        );
+    }
+
+    @Test
+    @Sql(scripts = {
+            "/sql/cleanup.sql",
+            "/sql/test_users.sql",
+            "/sql/test_products.sql",
+            "/sql/test_coupons.sql",
+            "/sql/test_user_coupons.sql",
+            "/sql/test_orders.sql"
+    }, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @DisplayName("월간 인기 상품을 조회한다")
+    void getPopularProductsMonthly_WithRealOrderData() {
+        // When
+        List<Product> result = productService.getPopularProductsMonthly();
+
+        // Then
+        Assertions.assertAll(
+                "월간 인기 상품 조회 검증",
+                () -> assertThat(result).isNotNull(),
+                () -> assertThat(result.size()).isLessThanOrEqualTo(100),
+                () -> assertThat(result.size()).isGreaterThan(0),
+                () -> {
+                    // 디버깅용 출력
+                    System.out.println("월간 인기 상품 수: " + result.size());
+                    result.forEach(p ->
+                        System.out.println("상품 ID: " + p.getId() + ", 이름: " + p.getName())
+                    );
+                }
+        );
+    }
 
     private ProductCreateCommand createCommand(String name, int price, Long stock) {
         return ProductCreateCommand.builder()
@@ -255,9 +347,6 @@ class ProductIntegrationTest {
                 .stock(stock)
                 .build();
     }
-
-
-
 
 
 }

@@ -28,6 +28,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final RedisTemplate<String, String> redisTemplate;
 
+    private final int POPULAR_PRODUCTS_LIMIT = 100;
 
     /**
      * 상품 ID로 상품 조회 - 캐시 적용
@@ -62,15 +63,41 @@ public class ProductService {
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
+
     /**
      * 최근 N일 동안 가장 판매량이 많은 상품 조회 - 캐시 적용
      */
-    @Cacheable(cacheNames = CacheType.Names.POPULAR_PRODUCTS, key = "#command.days + '_' + #command.limit")
     public List<Product> getPopularProducts(@Valid ProductPopularCommand command) {
         LocalDateTime startDate = java.time.LocalDateTime.now().minusDays(command.getDays());
         return productRepository.findPopularProducts(startDate, command.getLimit());
     }
 
+    /***
+     * 일간 판매량 조회 limit 100개
+     */
+    @Cacheable(cacheNames = CacheType.Names.POPULAR_PRODUCTS, key = "'daily'" )
+    public List<Product> getPopularProductsDaily() {
+        LocalDateTime startDate = LocalDateTime.now().minusDays(1);
+        return productRepository.findPopularProducts(startDate, POPULAR_PRODUCTS_LIMIT);
+    }
+
+    /***
+     * 주간 판매량 조회 limit 100개
+     */
+    @Cacheable(cacheNames = CacheType.Names.POPULAR_PRODUCTS,  key = "'weekly'")
+    public List<Product> getPopularProductsWeekly() {
+        LocalDateTime startDate = LocalDateTime.now().minusWeeks(1);
+        return productRepository.findPopularProducts(startDate, POPULAR_PRODUCTS_LIMIT);
+    }
+
+    /***
+     * 월간 판매량 조회 limit 100개
+     */
+    @Cacheable(cacheNames = CacheType.Names.POPULAR_PRODUCTS, key = "'monthly'")
+    public List<Product> getPopularProductsMonthly() {
+        LocalDateTime startDate = LocalDateTime.now().minusMonths(1);
+        return productRepository.findPopularProducts(startDate, POPULAR_PRODUCTS_LIMIT);
+    }
 
     /**
      * 상품 생성
