@@ -3,6 +3,7 @@ package io.hhplus.ecommerce.product.application.usecase;
 import io.hhplus.ecommerce.product.application.dto.result.ProductDto;
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.service.ProductService;
+import io.hhplus.ecommerce.ranking.domain.service.RankingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -10,12 +11,15 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ProductGetUseCase {
     private final ProductService productService;
+    private final RankingService rankingService;
     /**
      * 상품 상세 조회
      */
-    public ProductDto execute(Long productId) {
+    public ProductDto execute(Long productId, Long userId) {
         Product product = productService.getProduct(productId);
-        int likeCount = productService.getLikeCount(productId);  // Redis 직접
+        int likeCount = productService.getLikeCount(productId);
+
+        rankingService.recordView(productId,userId);
         return ProductDto.from(product,likeCount);
     }
 }

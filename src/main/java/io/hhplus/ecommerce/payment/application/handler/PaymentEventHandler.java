@@ -7,6 +7,7 @@ import io.hhplus.ecommerce.order.domain.service.OrderService;
 import io.hhplus.ecommerce.payment.domain.event.PaymentFailureEvent;
 import io.hhplus.ecommerce.payment.domain.event.PaymentSuccessEvent;
 import io.hhplus.ecommerce.product.domain.service.ProductService;
+import io.hhplus.ecommerce.ranking.domain.service.RankingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -29,6 +30,7 @@ public class PaymentEventHandler {
     private final OrderService orderService;
     private final ProductService productService;
     private final CartService cartService;
+    private final RankingService rankingService;
 
     /**
      * 결제 성공 이벤트
@@ -56,6 +58,9 @@ public class PaymentEventHandler {
                 cartService.clearCartItems(event.getCartItemIds());
                 log.info("장바구니 비우기 완료 - orderId: {}, cartItemIds: {}", orderId, event.getCartItemIds());
             }
+
+            //3. 랭킹 메트릭
+            rankingService.recordOrder(event.getOrderId());
 
             log.info("결제 성공 이벤트 처리 완료 - orderId: {}", orderId);
 

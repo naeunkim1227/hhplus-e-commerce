@@ -1,6 +1,7 @@
 package io.hhplus.ecommerce.product.domain.service;
 
 import io.hhplus.ecommerce.common.config.CacheType;
+import io.hhplus.ecommerce.common.config.redis.RedisKeyType;
 import io.hhplus.ecommerce.common.exception.BusinessException;
 import io.hhplus.ecommerce.common.lock.DistributedLock;
 import io.hhplus.ecommerce.product.application.dto.command.ProductCreateCommand;
@@ -136,7 +137,6 @@ public class ProductService {
     @Transactional
     public Product updateProduct(ProductUpdateCommand command) {
         Product product = this.getProduct(command.getProductId());
-
         // 상품 정보 업데이트 (null이 아닌 필드만 업데이트)
         Product updatedProduct = Product.builder()
                 .id(product.getId())
@@ -153,9 +153,8 @@ public class ProductService {
         return productRepository.save(updatedProduct);
     }
 
-
     public int getLikeCount(Long productId) {
-        String countKey = "like:count:" + productId;
+        String countKey = RedisKeyType.PRODUCT_LIKE.getKey(productId);
         String count = redisTemplate.opsForValue().get(countKey);
 
         if (count != null) {
@@ -169,17 +168,33 @@ public class ProductService {
         return dbLikeCount;
     }
 
-    public void increaseLikeCount(Long productId) {
-        redisTemplate.opsForValue().increment("like:count:" + productId);
+    public boolean increaseLikeCount(Long productId,Long userId) {
+        String productLikeKey = RedisKeyType.PRODUCT_LIKE.getKey(productId);
+        String userLikeKey = RedisKeyType.USER_LIKES.getKey(userId);
 
+        Long added = redisTemplate.opsForSet().add(userLikeKey, productId.toString());
+
+        if (added == null || added == 0) {
+            return false;
+        }
+
+        redisTemplate.opsForValue().increment(productLikeKey);
+        return true;
     }
 
-    public void decreaseLikeCount(Long productId) {
-        redisTemplate.opsForValue().decrement("like:count:" + productId);
+    public boolean decreaseLikeCount(Long productId, Long userId) {
+        String productLikeKey = RedisKeyType.PRODUCT_LIKE.getKey(productId);
+        String userLikeKey = RedisKeyType.USER_LIKES.getKey(userId);
 
+        Long removed = redisTemplate.opsForSet().remove(userLikeKey, productId.toString());
+
+        if (removed == null || removed == 0) {
+            return false;
+        }
+
+        redisTemplate.opsForValue().decrement(productLikeKey);
+        return true;
     }
-
-
 
 
 }

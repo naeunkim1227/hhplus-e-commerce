@@ -1,7 +1,6 @@
 package io.hhplus.ecommerce.product.integration;
 
 import io.hhplus.ecommerce.common.exception.BusinessException;
-import io.hhplus.ecommerce.config.TestContainerConfig;
 import io.hhplus.ecommerce.product.application.dto.command.ProductCreateCommand;
 import io.hhplus.ecommerce.product.application.dto.command.ProductUpdateCommand;
 import io.hhplus.ecommerce.product.application.dto.result.ProductDto;
@@ -99,7 +98,7 @@ class ProductIntegrationTest {
         ProductDto createdProduct = productCreateUseCase.execute(command);
 
         // Then
-        ProductDto selectedProduct = productGetUseCase.execute(createdProduct.getId());
+        ProductDto selectedProduct = productGetUseCase.execute(createdProduct.getId(),1L);
         Assertions.assertAll(
                 "상품 생성 검증",
                 () -> assertThat(createdProduct.getId()).isNotNull(),
@@ -140,7 +139,7 @@ class ProductIntegrationTest {
         Long notExistProductId = 99999L;
 
         // When/Then
-        assertThatThrownBy(() -> productGetUseCase.execute(notExistProductId))
+        assertThatThrownBy(() -> productGetUseCase.execute(notExistProductId,1L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ProductErrorCode.PRODUCT_NOT_FOUND.getMessage());
     }
@@ -226,7 +225,7 @@ class ProductIntegrationTest {
         // Given
         ProductCreateCommand command  = createCommand("꿀아메리카노2", 4500, 100L);
         ProductDto createdProduct = productCreateUseCase.execute(command);
-        ProductDto selectedProduct = productGetUseCase.execute(createdProduct.getId());
+        ProductDto selectedProduct = productGetUseCase.execute(createdProduct.getId(),1L);
 
         // When
         ProductUpdateCommand updateCommand = ProductUpdateCommand.builder()
@@ -246,7 +245,7 @@ class ProductIntegrationTest {
         ProductCreateCommand command  = createCommand("꿀아메리카노2", 4500, 100L);
         ProductDto createdProduct = productCreateUseCase.execute(command);
 
-        productService.increaseLikeCount(createdProduct.getId());
+        productService.increaseLikeCount(createdProduct.getId(), 1L);
         String countKey = "like:count:" + createdProduct.getId();
         String count = redisTemplate.opsForValue().get(countKey);
 

@@ -3,10 +3,7 @@ package io.hhplus.ecommerce.product.presentation.controller;
 import io.hhplus.ecommerce.common.response.CommonResponse;
 import io.hhplus.ecommerce.product.application.dto.result.ProductDto;
 import io.hhplus.ecommerce.product.application.dto.command.ProductCreateCommand;
-import io.hhplus.ecommerce.product.application.usecase.ProductCreateUseCase;
-import io.hhplus.ecommerce.product.application.usecase.ProductListUseCase;
-import io.hhplus.ecommerce.product.application.usecase.ProductGetUseCase;
-import io.hhplus.ecommerce.product.application.usecase.ProductPopularUseCase;
+import io.hhplus.ecommerce.product.application.usecase.*;
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.service.ProductService;
 import io.hhplus.ecommerce.product.presentation.dto.request.ProductCreateRequest;
@@ -36,6 +33,7 @@ public class ProductController {
     private final ProductListUseCase productListUseCase;
     private final ProductCreateUseCase productCreateUseCase;
     private final ProductPopularUseCase productPopularUseCase;
+    private final ProductLikeUseCase productLikeUseCase;
     private final ProductService productService;
 
     /**
@@ -56,8 +54,10 @@ public class ProductController {
     @GetMapping("/{productId}")
     public CommonResponse<ProductResponse> getProduct(
             @Parameter(description = "상품 ID",example = "1")
-            @PathVariable Long productId) {
-        ProductResponse product = ProductResponse.from(productGetUseCase.execute(productId));
+            @PathVariable Long productId,
+            @RequestParam(required = false) Long userId
+    ) {
+        ProductResponse product = ProductResponse.from(productGetUseCase.execute(productId,userId));
         return CommonResponse.success(product);
     }
 
@@ -90,9 +90,31 @@ public class ProductController {
         return CommonResponse.success(ProductResponse.from(ProductDto.from(updatedProduct)));
     }
 
+    /**
+     * 상품 좋아요 추가
+     */
     @PostMapping("/like/{productId}")
-    public CommonResponse<ProductResponse> likeProduct(@PathVariable Long productId){
-        productService.increaseLikeCount(productId);
+    public CommonResponse<ProductResponse> likeProduct(
+            @Parameter(description = "상품 ID", example = "1")
+            @PathVariable Long productId,
+            @Parameter(description = "사용자 ID", example = "1")
+            @RequestParam(required = false) Long userId
+    ) {
+        productLikeUseCase.addLike(productId, userId);
+        return CommonResponse.success();
+    }
+
+    /**
+     * 상품 좋아요 취소
+     */
+    @DeleteMapping("/like/{productId}")
+    public CommonResponse<Void> unlikeProduct(
+            @Parameter(description = "상품 ID", example = "1")
+            @PathVariable Long productId,
+            @Parameter(description = "사용자 ID", example = "1")
+            @RequestParam(required = false) Long userId
+    ) {
+        productLikeUseCase.removeLike(productId, userId);
         return CommonResponse.success();
     }
 
