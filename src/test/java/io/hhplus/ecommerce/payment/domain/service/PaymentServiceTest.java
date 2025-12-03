@@ -1,5 +1,6 @@
 package io.hhplus.ecommerce.payment.domain.service;
 
+import io.hhplus.ecommerce.payment.domain.dto.command.PaymentProcessCommand;
 import io.hhplus.ecommerce.payment.domain.event.PaymentFailureEvent;
 import io.hhplus.ecommerce.payment.domain.event.PaymentSuccessEvent;
 import io.hhplus.ecommerce.user.domain.service.UserService;
@@ -46,7 +47,14 @@ class PaymentServiceTest {
         ArgumentCaptor<PaymentSuccessEvent> eventCaptor = ArgumentCaptor.forClass(PaymentSuccessEvent.class);
 
         // When: 결제 처리
-        paymentService.processPayment(orderId, userId, amount, cartItemIds);
+        PaymentProcessCommand paymentCommand = PaymentProcessCommand.of(
+                orderId,
+                userId,
+                amount,
+                cartItemIds
+        );
+
+        paymentService.processPayment(paymentCommand);
 
         // Then: PaymentSuccessEvent가 발행되었는지 검증
         verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());
@@ -81,7 +89,14 @@ class PaymentServiceTest {
         ArgumentCaptor<PaymentFailureEvent> eventCaptor = ArgumentCaptor.forClass(PaymentFailureEvent.class);
 
         // When: 결제 처리
-        paymentService.processPayment(orderId, userId, amount, cartItemIds);
+        PaymentProcessCommand paymentCommand = PaymentProcessCommand.of(
+                orderId,
+                userId,
+                amount,
+                cartItemIds
+        );
+
+        paymentService.processPayment(paymentCommand);
 
         // Then: PaymentFailureEvent가 발행되었는지 검증
         verify(eventPublisher, times(1)).publishEvent(eventCaptor.capture());

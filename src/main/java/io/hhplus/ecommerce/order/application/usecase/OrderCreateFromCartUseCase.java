@@ -11,6 +11,7 @@ import io.hhplus.ecommerce.order.domain.dto.OrderItemInfo;
 import io.hhplus.ecommerce.order.domain.entity.Order;
 import io.hhplus.ecommerce.order.domain.exception.OrderErrorCode;
 import io.hhplus.ecommerce.order.domain.service.OrderService;
+import io.hhplus.ecommerce.payment.domain.dto.command.PaymentProcessCommand;
 import io.hhplus.ecommerce.payment.domain.service.PaymentService;
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.service.ProductService;
@@ -92,9 +93,15 @@ public class OrderCreateFromCartUseCase {
             Order order = orderService
                     .createOrderWithItems(OrderInfo.from(orderId, command.getUserId(), command.getCouponId(), items, discountAmount));
 
-            paymentService.processPayment(orderId, order.getUserId(), order.getFinalAmount(), command.getCartItemIds());
-            return OrderDto.from(order, order.getOrderItems());
+            PaymentProcessCommand paymentCommand = PaymentProcessCommand.of(
+                    orderId,
+                    order.getUserId(),
+                    order.getFinalAmount(),
+                    command.getCartItemIds()
+            );
 
+            paymentService.processPayment(paymentCommand);
+            return OrderDto.from(order, order.getOrderItems());
         } catch (Exception e) {
             // 보상 트랜잭션: 성공한 재고 차감만 복구
             for (CartItem cartItem : decreasedItems) {

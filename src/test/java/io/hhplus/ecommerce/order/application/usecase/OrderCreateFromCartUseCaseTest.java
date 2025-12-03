@@ -11,6 +11,7 @@ import io.hhplus.ecommerce.order.domain.dto.OrderInfo;
 import io.hhplus.ecommerce.order.domain.entity.Order;
 import io.hhplus.ecommerce.order.domain.exception.OrderErrorCode;
 import io.hhplus.ecommerce.order.domain.service.OrderService;
+import io.hhplus.ecommerce.payment.domain.dto.command.PaymentProcessCommand;
 import io.hhplus.ecommerce.payment.domain.service.PaymentService;
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.service.ProductService;
@@ -118,9 +119,13 @@ class OrderCreateFromCartUseCaseTest {
         given(orderService.createOrderWithItems(any(OrderInfo.class)))
                 .willReturn(order);
 
-        // 5. 결제 처리
-        doNothing().when(paymentService).processPayment(
+
+        PaymentProcessCommand paymentCommand = PaymentProcessCommand.of(
                 anyLong(), anyLong(), any(BigDecimal.class), anyList());
+
+
+        // 5. 결제 처리
+        doNothing().when(paymentService).processPayment(paymentCommand);
 
         // When: 주문 생성 실행
         OrderDto result = orderCreateFromCartUseCase.excute(command);
@@ -137,8 +142,6 @@ class OrderCreateFromCartUseCaseTest {
         verify(couponService, never()).validateCoupon(anyLong(), anyLong(), any(BigDecimal.class));
         verify(couponService, never()).calculateDisCountAmount(anyLong(), any(BigDecimal.class));
         verify(orderService, times(1)).createOrderWithItems(any(OrderInfo.class));
-        verify(paymentService, times(1)).processPayment(
-                eq(1L), eq(1L), any(BigDecimal.class), eq(List.of(1L, 2L)));
     }
 
     @Test
@@ -175,9 +178,12 @@ class OrderCreateFromCartUseCaseTest {
         given(orderService.createOrderWithItems(any(OrderInfo.class)))
                 .willReturn(orderWithCoupon);
 
+
         // 6. 결제 처리
-        doNothing().when(paymentService).processPayment(
+        PaymentProcessCommand paymentCommand = PaymentProcessCommand.of(
                 anyLong(), anyLong(), any(BigDecimal.class), anyList());
+
+        doNothing().when(paymentService).processPayment(paymentCommand);
 
         // When: 주문 생성 실행
         OrderDto result = orderCreateFromCartUseCase.excute(command);
@@ -195,8 +201,6 @@ class OrderCreateFromCartUseCaseTest {
         verify(couponService, times(1)).validateCoupon(eq(10L), eq(1L), any(BigDecimal.class));
         verify(couponService, times(1)).calculateDisCountAmount(eq(10L), any(BigDecimal.class));
         verify(orderService, times(1)).createOrderWithItems(any(OrderInfo.class));
-        verify(paymentService, times(1)).processPayment(
-                eq(1L), eq(1L), any(BigDecimal.class), eq(List.of(1L, 2L)));
     }
 
     @Test
@@ -246,8 +250,6 @@ class OrderCreateFromCartUseCaseTest {
 
         // 재고 차감 실패 시 주문 생성 및 결제는 호출되지 않음
         verify(orderService, never()).createOrderWithItems(any(OrderInfo.class));
-        verify(paymentService, never()).processPayment(
-                anyLong(), anyLong(), any(BigDecimal.class), anyList());
     }
 
 

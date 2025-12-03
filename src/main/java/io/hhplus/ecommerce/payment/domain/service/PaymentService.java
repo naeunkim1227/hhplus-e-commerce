@@ -1,5 +1,6 @@
 package io.hhplus.ecommerce.payment.domain.service;
 
+import io.hhplus.ecommerce.payment.domain.dto.command.PaymentProcessCommand;
 import io.hhplus.ecommerce.payment.domain.event.PaymentFailureEvent;
 import io.hhplus.ecommerce.payment.domain.event.PaymentSuccessEvent;
 import io.hhplus.ecommerce.user.domain.service.UserService;
@@ -8,9 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -25,34 +24,35 @@ public class PaymentService {
     private final ApplicationEventPublisher eventPublisher;
     private final UserService userService;
 
-    public void processPayment(Long orderId, Long userId, BigDecimal amount, List<Long> cartItemIds) {
-        log.info("결제 처리 시작 - ", orderId, userId, amount);
+    public void processPayment(PaymentProcessCommand command) {
+        log.info("결제 처리 시작 - orderId: {}, userId: {}, amount: {}",
+                command.getOrderId(), command.getUserId(), command.getAmount());
 
         try {
             // 타사 PG 결제 처리 시뮬레이션
             Thread.sleep(2000);
 
             // 잔액 차감 (실패 시 예외 발생)
-            userService.reduceBalance(userId, amount);
+            userService.reduceBalance(command.getUserId(), command.getAmount());
 
             String paymentId = "PAY-" + UUID.randomUUID().toString().substring(0, 8);
 
             PaymentSuccessEvent event = new PaymentSuccessEvent(
-                    orderId,
-                    userId,
-                    amount,
+                    command.getOrderId(),
+                    command.getUserId(),
+                    command.getAmount(),
                     paymentId,
                     LocalDateTime.now(),
-                    cartItemIds
+                    command.getCartItemIds()
             );
 
             eventPublisher.publishEvent(event);
         } catch (Exception e) {
             // reduceBalance 실패 포함 모든 예외 처리
             PaymentFailureEvent event = new PaymentFailureEvent(
-                    orderId,
-                    userId,
-                    amount,
+                    command.getOrderId(),
+                    command.getUserId(),
+                    command.getAmount(),
                     "결제 처리 실패: " + e.getMessage(),
                     LocalDateTime.now()
             );

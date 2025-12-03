@@ -8,6 +8,7 @@ import io.hhplus.ecommerce.order.domain.dto.OrderInfo;
 import io.hhplus.ecommerce.order.domain.dto.OrderItemInfo;
 import io.hhplus.ecommerce.order.domain.entity.Order;
 import io.hhplus.ecommerce.order.domain.service.OrderService;
+import io.hhplus.ecommerce.payment.domain.dto.command.PaymentProcessCommand;
 import io.hhplus.ecommerce.payment.domain.service.PaymentService;
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.service.ProductService;
@@ -56,7 +57,14 @@ public class OrderCreateDirectUseCase {
             Order order = orderService
                     .createOrderWithItems(OrderInfo.from(orderId, command.getUserId(), command.getCouponId(), items, discountAmount));
 
-            paymentService.processPayment(order.getId(), command.getUserId(), order.getFinalAmount(), null);
+            PaymentProcessCommand paymentCommand = PaymentProcessCommand.of(
+                    orderId,
+                    order.getUserId(),
+                    order.getFinalAmount(),
+                    null
+            );
+
+            paymentService.processPayment(paymentCommand);
 
             return OrderDto.from(order, order.getOrderItems());
         }catch (Exception e){
