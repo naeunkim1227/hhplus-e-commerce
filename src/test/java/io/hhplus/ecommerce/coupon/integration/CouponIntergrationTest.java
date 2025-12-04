@@ -2,7 +2,7 @@ package io.hhplus.ecommerce.coupon.integration;
 
 
 import io.hhplus.ecommerce.config.TestContainerConfig;
-import io.hhplus.ecommerce.coupon.application.usecase.CouponIssueUseCase;
+import io.hhplus.ecommerce.coupon.domain.service.CouponIssueQueueService;
 import io.hhplus.ecommerce.coupon.domain.entity.Coupon;
 import io.hhplus.ecommerce.coupon.domain.entity.CouponStatus;
 import io.hhplus.ecommerce.coupon.domain.entity.CouponType;
@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.*;
 public class CouponIntergrationTest {
 
     @Autowired
-    private CouponIssueUseCase couponIssueUseCase;
+    private CouponIssueQueueService couponIssueQueueService;
 
     @Autowired
     private JpaCouponRepository couponRepository;
@@ -87,7 +87,7 @@ public class CouponIntergrationTest {
 
 
     @Test
-    @DisplayName("선착순 쿠폰을 발급한다 - 분산락을 사용하여 300명이 동시에 요청했을때 100명만 성공한다.")
+    @DisplayName("선착순 쿠폰을 발급한다 - 300명이 동시에 요청했을때 100명만 성공한다.")
     void issueCouponConcurrency() throws InterruptedException {
         // given
         int issuedCoupontCount = 100;
@@ -120,7 +120,7 @@ public class CouponIntergrationTest {
             long userId = i + 1;
             executorService.submit(() -> {
                 try {
-                    couponIssueUseCase.execute(userId, couponId);
+                    couponIssueQueueService.addToQueue(userId, couponId);
                 } catch (Exception e) {
                 } finally {
                     latch.countDown();
