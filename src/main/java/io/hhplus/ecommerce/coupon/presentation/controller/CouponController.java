@@ -1,10 +1,8 @@
 package io.hhplus.ecommerce.coupon.presentation.controller;
 
 import io.hhplus.ecommerce.common.response.CommonResponse;
-import io.hhplus.ecommerce.coupon.application.result.CouponIssueDto;
-import io.hhplus.ecommerce.coupon.application.usecase.CouponIssueUseCase;
+import io.hhplus.ecommerce.coupon.domain.service.CouponIssueQueueService;
 import io.hhplus.ecommerce.coupon.domain.entity.UserCoupon;
-import io.hhplus.ecommerce.coupon.domain.exception.CouponErrorCode;
 import io.hhplus.ecommerce.coupon.domain.service.CouponService;
 import io.hhplus.ecommerce.coupon.presentation.dto.response.CouponIssueResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,7 +19,7 @@ import java.util.List;
 @Validated
 public class CouponController {
 
-    private final CouponIssueUseCase couponIssueUseCase;
+    private final CouponIssueQueueService couponIssueQueueService;
     private final CouponService couponService;
 
     @PostMapping("/{couponId}/issue")
@@ -32,7 +30,7 @@ public class CouponController {
             @Parameter(description = "사용자 ID", example = "1")
             @RequestParam Long userId) {
 
-        return CommonResponse.success(CouponIssueResponse.fromResult(couponIssueUseCase.execute(userId, couponId)));
+        return CommonResponse.success(CouponIssueResponse.fromResult(couponIssueQueueService.addToQueue(userId, couponId)));
     }
 
     @GetMapping("/users/{userId}")

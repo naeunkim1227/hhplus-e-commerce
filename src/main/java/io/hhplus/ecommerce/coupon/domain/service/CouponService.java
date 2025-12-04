@@ -72,18 +72,20 @@ public class CouponService {
         return discountAmount;
     }
 
-    @DistributedLock(key = "'coupon:stock:' + #couponId", waitTime = 3, leaseTime = 0.5)
+    /**
+     * 쿠폰 발급 (Stream Consumer에서 호출)
+     * Redis에서 이미 중복/재고 체크가 완료되었으므로, DB 저장만 수행
+     */
     @Transactional
     public UserCoupon issueCoupon(Long userId, Long couponId) {
-        userCouponRepository.findByUserIdAndCouponId(userId, couponId)
-                .ifPresent(c -> {
-                    throw new BusinessException(CouponErrorCode.COUPON_ALREADY_ISSUED);
-                });
+        Optional<UserCoupon> existing = userCouponRepository.findByUserIdAndCouponId(userId, couponId);
+        if (existing.isPresent()) {
+            return existing.get();  // 중복이면 기존 쿠폰 반환 (멱등성 보장)
+        }
 
         Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(() -> new BusinessException(CouponErrorCode.COUPON_NOT_FOUND));
 
-        coupon.isAvailableIssue();
         coupon.increaseIssuedQuantity();
 
         UserCoupon userCoupon = UserCoupon.create(userId, couponId);
