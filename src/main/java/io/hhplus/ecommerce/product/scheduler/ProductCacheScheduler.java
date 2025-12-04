@@ -1,12 +1,8 @@
 package io.hhplus.ecommerce.product.scheduler;
 
-import io.hhplus.ecommerce.common.config.CacheType;
-import io.hhplus.ecommerce.product.application.dto.command.ProductPopularCommand;
 import io.hhplus.ecommerce.product.domain.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 

@@ -1,7 +1,7 @@
 package io.hhplus.ecommerce.product.domain.service;
 
-import io.hhplus.ecommerce.common.config.CacheType;
-import io.hhplus.ecommerce.common.config.redis.RedisKeyType;
+import io.hhplus.ecommerce.common.constants.CacheType;
+import io.hhplus.ecommerce.common.constants.RedisKeyType;
 import io.hhplus.ecommerce.common.exception.BusinessException;
 import io.hhplus.ecommerce.common.lock.DistributedLock;
 import io.hhplus.ecommerce.product.application.dto.command.ProductCreateCommand;

@@ -1,4 +1,4 @@
-package io.hhplus.ecommerce.common.config;
+package io.hhplus.ecommerce.common.constants;
 
 import java.time.Duration;
 

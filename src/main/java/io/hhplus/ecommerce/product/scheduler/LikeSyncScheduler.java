@@ -1,6 +1,7 @@
 // common/scheduler/LikeSyncScheduler.java
 package io.hhplus.ecommerce.common.scheduler;
 
+import io.hhplus.ecommerce.common.constants.RedisKeyType;
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class LikeSyncScheduler {
         log.info("좋아요 증분 동기화 시작");
 
         try {
-            Set<String> countKeys = redisTemplate.keys("like:count:*");
+            Set<String> countKeys = redisTemplate.keys(String.valueOf(RedisKeyType.PRODUCT_LIKE));
 
             if (countKeys == null || countKeys.isEmpty()) {
                 return;
