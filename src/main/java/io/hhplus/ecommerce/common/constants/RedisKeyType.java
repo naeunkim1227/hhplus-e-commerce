@@ -31,7 +31,7 @@ public enum RedisKeyType {
     COUPON_ISSUE_COUNT("coupon:issue:count:%s", Duration.ofMinutes(30)),
     COUPON_ISSUE_MAX("coupon:issue:max:%s", Duration.ofMinutes(30)),
     COUPON_ISSUE_SET("coupon:issue:set:%s", Duration.ofMinutes(30)),
-    COUPON_ISSUE_STREAM("coupon:issue:stream:%s", Duration.ofMinutes(30));
+    COUPON_ISSUE_STREAM("coupon:issue:stream", Duration.ofMinutes(30));  // 단일 스트림
 
     private final String pattern;
     private final Duration ttl;
