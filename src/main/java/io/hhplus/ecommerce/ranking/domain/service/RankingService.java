@@ -1,10 +1,13 @@
 package io.hhplus.ecommerce.ranking.domain.service;
 
-import io.hhplus.ecommerce.common.config.redis.RedisKeyType;
+import io.hhplus.ecommerce.common.constants.RedisKeyType;
 import io.hhplus.ecommerce.ranking.policy.RankingPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
@@ -56,10 +59,18 @@ public class RankingService {
     }
 
     private void incrementMetric(Long productId, double incrementScore) {
+        String today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
+
         redisTemplate.opsForZSet().incrementScore(
-                RedisKeyType.RANKING_POPULAR.getKey(),
+                RedisKeyType.RANKING_POPULAR.getKey(today),
                 String.valueOf(productId),
                 incrementScore
         );
+
+        redisTemplate.expire(
+                RedisKeyType.RANKING_POPULAR.getKey(today),
+                RedisKeyType.RANKING_POPULAR.getTtl()
+        );
+
     }
 }

@@ -1,6 +1,6 @@
 package io.hhplus.ecommerce.product.scheduler;
 
-import io.hhplus.ecommerce.common.config.redis.RedisKeyType;
+import io.hhplus.ecommerce.common.constants.RedisKeyType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -21,6 +21,27 @@ import java.util.Set;
 public class RankingScheduler {
 
     private final RedisTemplate<String, String> redisTemplate;
+
+    private String saveDayRankingData(LocalDate date){
+        String dailyKey = getDailyKey(date);
+        String targetKey = RedisKeyType.RANKING_DAILY.getKey(dailyKey);
+        Set<ZSetOperations.TypedTuple<String>> baseData = redisTemplate.opsForZSet().rangeWithScores( RedisKeyType.RANKING_POPULAR.getKey(dailyKey), 0, -1);
+
+        if(baseData == null || baseData.isEmpty()){
+               redisTemplate.opsForZSet().add(targetKey, "EMPTY", 0);
+               log.warn("No ranking data found for date: {}. Stored EMPTY marker.", dailyKey);
+        }else{
+            for(ZSetOperations.TypedTuple<String> tuple : baseData){
+                redisTemplate.opsForZSet().add(targetKey, tuple.getValue(), tuple.getScore());
+            }
+            log.info("Saved {} ranking entries for date: {}", baseData.size(), dailyKey);
+        }
+
+        // TTL 설정 (7일)
+        redisTemplate.expire(targetKey, RedisKeyType.RANKING_DAILY.getTtl());
+
+        return targetKey;
+    }
 
     /**
      * @return 합산에 사용된 일간 키 합치기
@@ -48,6 +69,12 @@ public class RankingScheduler {
         String firstKey = existingKeys.get(0);
         List<String> otherKeys = existingKeys.subList(1, existingKeys.size());
         Long resultCount = redisTemplate.opsForZSet().unionAndStore(firstKey, otherKeys, targetKey);
+
+        // 3. EMPTY 마커 제거
+        Long removedCount = redisTemplate.opsForZSet().remove(targetKey, "EMPTY");
+        if (removedCount != null && removedCount > 0) {
+            log.info("Removed EMPTY marker from aggregated ranking: {}", targetKey);
+        }
 
         log.info("Aggregated {} daily rankings into {}. Result count: {}", validKeyCount, targetKey, resultCount);
 
@@ -77,34 +104,7 @@ public class RankingScheduler {
         System.out.println("---일간 데이터 합산---");
 
         LocalDate yesterday = LocalDate.now().minusDays(1);
-        String dailyKey = getDailyKey(yesterday);
-
-        log.info("Starting daily ranking update for {}", yesterday);
-
-        Set<ZSetOperations.TypedTuple<String>> data = redisTemplate.opsForZSet().rangeWithScores( RedisKeyType.RANKING_POPULAR.getKey(), 0, -1);
-
-        System.out.println("현재 쌓인 데이터 : " + data);
-
-        if (data == null || data.isEmpty()) {
-            log.warn("No data to copy from {} to {}");
-            return;
-        }
-
-        redisTemplate.delete(RedisKeyType.RANKING_POPULAR.getKey());
-
-        for (ZSetOperations.TypedTuple<String> tuple : data) {
-            redisTemplate.opsForZSet().add( RedisKeyType.RANKING_DAILY.getKey(dailyKey) , tuple.getValue(), tuple.getScore());
-        }
-
-        System.out.println(RedisKeyType.RANKING_DAILY.getKey(dailyKey));
-
-        // TTL 설정
-        redisTemplate.expire(
-                RedisKeyType.RANKING_DAILY.getKey(dailyKey),
-                RedisKeyType.RANKING_DAILY.getTtl()
-        );
-
-        log.info("Completed daily ranking update for {}", yesterday);
+        saveDayRankingData(yesterday);
     }
 
     /**
@@ -124,6 +124,11 @@ public class RankingScheduler {
         for (int i = 1; i <= 7; i++) {
             LocalDate targetDay = LocalDate.now().minusDays(i);
             String dailyKey = RedisKeyType.RANKING_DAILY.getKey(getDailyKey(targetDay));
+
+            //일간데이터가 없을 경우 다시 수집처리
+            if(!redisTemplate.hasKey(dailyKey)){
+                dailyKey = saveDayRankingData(targetDay);
+            }
             dailyKeys.add(dailyKey);
         }
 
@@ -170,6 +175,10 @@ public class RankingScheduler {
 
         while (!currentDate.isAfter(endOfLastMonth)) {
             String dailyKey = RedisKeyType.RANKING_DAILY.getKey(getDailyKey(currentDate));
+            if(!redisTemplate.hasKey(dailyKey)){
+               dailyKey =  saveDayRankingData(currentDate);
+            }
+
             dailyKeys.add(dailyKey);
             currentDate = currentDate.plusDays(1);
         }

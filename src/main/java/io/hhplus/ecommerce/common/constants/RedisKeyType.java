@@ -1,4 +1,4 @@
-package io.hhplus.ecommerce.common.config.redis;
+package io.hhplus.ecommerce.common.constants;
 
 import java.time.Duration;
 
@@ -8,8 +8,8 @@ import java.time.Duration;
  */
 public enum RedisKeyType {
 
-    // ==================== 랭킹 ====================
-    RANKING_POPULAR("ranking:popular", Duration.ofHours(24)),
+    // ==================== 랭킹  ====================
+    RANKING_POPULAR("ranking:popular:%s", Duration.ofDays(30)),
 
     RANKING_DAILY("ranking:daily:%s", Duration.ofDays(7)),
     RANKING_WEEKLY("ranking:weekly:%s", Duration.ofDays(30)),
@@ -24,8 +24,14 @@ public enum RedisKeyType {
     // ==================== 유저 ====================
     USER_VIEWS("user:views:%s", Duration.ofHours(24)),
     USER_LIKES("user:likes:%s", Duration.ZERO),
-    USER_ORDERS("user:orders:%s", Duration.ZERO),
-    USER_CARTS("user:carts:%s", Duration.ZERO);
+    USER_CARTS("user:carts:%s", Duration.ZERO),
+
+
+    // ==================== 쿠폰====================
+    COUPON_ISSUE_COUNT("coupon:issue:count:%s", Duration.ofMinutes(30)),
+    COUPON_ISSUE_MAX("coupon:issue:max:%s", Duration.ofMinutes(30)),
+    COUPON_ISSUE_SET("coupon:issue:set:%s", Duration.ofMinutes(30)),
+    COUPON_ISSUE_STREAM("coupon:issue:stream:%s", Duration.ofMinutes(30));
 
     private final String pattern;
     private final Duration ttl;

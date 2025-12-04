@@ -1,13 +1,12 @@
 package io.hhplus.ecommerce.ranking.integration;
 
-import io.hhplus.ecommerce.common.config.redis.RedisKeyType;
+import io.hhplus.ecommerce.common.constants.RedisKeyType;
 import io.hhplus.ecommerce.product.application.dto.command.ProductCreateCommand;
 import io.hhplus.ecommerce.product.application.dto.result.ProductDto;
 import io.hhplus.ecommerce.product.application.usecase.ProductCreateUseCase;
 import io.hhplus.ecommerce.product.application.usecase.ProductLikeUseCase;
 import io.hhplus.ecommerce.ranking.domain.service.RankingService;
 import io.hhplus.ecommerce.ranking.policy.RankingPolicy;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
