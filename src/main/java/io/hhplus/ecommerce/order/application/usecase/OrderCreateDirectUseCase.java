@@ -7,13 +7,14 @@ import io.hhplus.ecommerce.order.application.dto.result.OrderDto;
 import io.hhplus.ecommerce.order.domain.dto.OrderInfo;
 import io.hhplus.ecommerce.order.domain.dto.OrderItemInfo;
 import io.hhplus.ecommerce.order.domain.entity.Order;
+import io.hhplus.ecommerce.order.domain.event.OrderCompletedEvent;
 import io.hhplus.ecommerce.order.domain.service.OrderService;
-import io.hhplus.ecommerce.payment.domain.dto.command.PaymentProcessCommand;
-import io.hhplus.ecommerce.payment.domain.service.PaymentService;
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.service.ProductService;
+import io.hhplus.ecommerce.user.domain.service.UserService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,11 +28,12 @@ public class OrderCreateDirectUseCase {
     private final OrderService orderService;
     private final ProductService productService;
     private final CouponService couponService;
-    private final PaymentService paymentService;
+    private final UserService userService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public OrderDto excute(OrderCreateDirectCommand command) {
-        // 1단계: 재고 차감 (실패하면 바로 롤백)
+        // 재고 차감 (실패하면 바로 롤백)
         try {
             productService.decreaseStock(command.getProductId(), command.getQuantity());
         } catch (Exception e) {
@@ -41,30 +43,35 @@ public class OrderCreateDirectUseCase {
 
         //재고 차감 성공후에 진행
         try {
-            Long orderId = orderService.getNextOrderId();
-
+            //상품 조회
             Product product = productService.getProduct(command.getProductId());
             BigDecimal totalAmount = product.getPrice().multiply(BigDecimal.valueOf(command.getQuantity()));
 
             BigDecimal discountAmount = BigDecimal.ZERO;
+            //쿠폰 검증 및 계산
             if (command.getCouponId() != null) {
                 couponService.validateCoupon(command.getCouponId(), command.getUserId(), totalAmount);
                 discountAmount = couponService.calculateDisCountAmount(command.getCouponId(), totalAmount);
             }
-
             List<OrderItemInfo> items = List.of(OrderItemInfo.from(product, command.getQuantity()));
 
-            Order order = orderService
-                    .createOrderWithItems(OrderInfo.from(orderId, command.getUserId(), command.getCouponId(), items, discountAmount));
+            //주문 생성
+            Order order = orderService.createOrderWithItems(OrderInfo.from(command.getUserId(), command.getCouponId(), items, discountAmount));
 
-            PaymentProcessCommand paymentCommand = PaymentProcessCommand.of(
-                    orderId,
+            //잔액 차감
+            userService.reduceBalance(command.getUserId(), order.getFinalAmount());
+
+            //주문 완료 처리
+            orderService.completeOrder(order.getId());
+
+            //부가로직 이벤트 발행 처리
+            OrderCompletedEvent event = new OrderCompletedEvent(
+                    order.getId(),
                     order.getUserId(),
                     order.getFinalAmount(),
                     null
             );
-
-            paymentService.processPayment(paymentCommand);
+            eventPublisher.publishEvent(event);
 
             return OrderDto.from(order, order.getOrderItems());
         }catch (Exception e){
