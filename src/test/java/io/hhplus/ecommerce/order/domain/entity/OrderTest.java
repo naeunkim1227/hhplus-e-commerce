@@ -14,7 +14,6 @@ class OrderTest {
     @DisplayName("유효한 값으로 주문을 생성하면 성공한다")
     void order_Success() {
         // Given
-        Long orderId = 1L;
         Long userId = 1L;
         Long couponId = 10L;
         BigDecimal totalAmount = new BigDecimal("100000");
@@ -22,11 +21,10 @@ class OrderTest {
         BigDecimal finalAmount = new BigDecimal("90000");
 
         // When
-        Order order = Order.create(orderId, userId, couponId, totalAmount, discountAmount, finalAmount);
+        Order order = Order.create(userId, couponId, totalAmount, discountAmount, finalAmount);
 
         // Then
         assertThat(order).isNotNull();
-        assertThat(order.getId()).isEqualTo(orderId);
         assertThat(order.getUserId()).isEqualTo(userId);
         assertThat(order.getCouponId()).isEqualTo(couponId);
         assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
@@ -40,7 +38,7 @@ class OrderTest {
     @DisplayName("주문 상태 변경")
     void changeStatus_Success() {
         // Given
-        Order order = Order.create(1L, 1L, null,
+        Order order = Order.create( 1L, null,
             BigDecimal.valueOf(50000), BigDecimal.ZERO, BigDecimal.valueOf(50000));
 
         // When
