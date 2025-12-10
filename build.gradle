@@ -46,6 +46,7 @@ dependencies {
     implementation 'org.springframework.retry:spring-retry'
     implementation 'org.springframework:spring-aspects'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.apache.commons:commons-pool2'
     implementation 'org.redisson:redisson-spring-boot-starter:3.27.2'
     implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 
