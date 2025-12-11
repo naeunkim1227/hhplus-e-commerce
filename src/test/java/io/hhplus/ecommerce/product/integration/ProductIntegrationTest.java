@@ -1,14 +1,12 @@
 package io.hhplus.ecommerce.product.integration;
 
+import io.hhplus.ecommerce.common.constants.RedisKeyType;
 import io.hhplus.ecommerce.common.exception.BusinessException;
 import io.hhplus.ecommerce.product.application.dto.command.ProductCreateCommand;
 import io.hhplus.ecommerce.product.application.dto.command.ProductUpdateCommand;
 import io.hhplus.ecommerce.product.application.dto.result.ProductDto;
 import io.hhplus.ecommerce.product.application.dto.command.ProductPopularCommand;
-import io.hhplus.ecommerce.product.application.usecase.ProductCreateUseCase;
-import io.hhplus.ecommerce.product.application.usecase.ProductGetUseCase;
-import io.hhplus.ecommerce.product.application.usecase.ProductListUseCase;
-import io.hhplus.ecommerce.product.application.usecase.ProductPopularUseCase;
+import io.hhplus.ecommerce.product.application.usecase.*;
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.exception.ProductErrorCode;
 
@@ -22,22 +20,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -56,6 +46,9 @@ class ProductIntegrationTest {
     private ProductGetUseCase productGetUseCase;
 
     @Autowired
+    private ProductLikeUseCase productLikeUseCase;
+
+    @Autowired
     private ProductPopularUseCase productPopularUseCase;
     @Autowired
     private JpaProductRepository jpaProductRepository;
@@ -65,7 +58,6 @@ class ProductIntegrationTest {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
-
 
 
     @Test
@@ -347,5 +339,40 @@ class ProductIntegrationTest {
                 .build();
     }
 
+    @Test
+    @DisplayName("상품 좋아요 후 부가로직 이벤트를 잘 수행하는지 확인한다.")
+    void productLikeVerifyEventExecution() {
+        //Given
+        ProductCreateCommand command  = createCommand("출근싫어아메리카노", 4500, 100L);
+        ProductDto createdProduct = productCreateUseCase.execute(command);
+
+        //When
+        productLikeUseCase.addLike(createdProduct.getId(), 5L);
+
+        //Then
+        await().untilAsserted(() -> {
+            String productLikeKey = RedisKeyType.PRODUCT_LIKE.getKey(createdProduct.getId());
+            assertThat(redisTemplate.hasKey(productLikeKey)).isTrue();
+            String count = redisTemplate.opsForValue().get(productLikeKey);
+            assertThat(count).isEqualTo("1");
+        });
+    }
+
+    @Test
+    @DisplayName("상품 조회 뒤 랭킹 누적 이벤트가 실행된다.")
+    void getProductVerifyEventExecution() {
+        // Given
+        ProductCreateCommand command  = createCommand("출근싫어아메리카노", 4500, 100L);
+        ProductDto createdProduct = productCreateUseCase.execute(command);
+
+        //When
+        productGetUseCase.execute(createdProduct.getId(), 1L);
+
+        // Then
+        await().untilAsserted(() -> {
+            String count = redisTemplate.opsForValue().get(RedisKeyType.PRODUCT_VIEW.getKey(createdProduct.getId()));
+            assertThat(count).isEqualTo("1");
+        });
+    }
 
 }
