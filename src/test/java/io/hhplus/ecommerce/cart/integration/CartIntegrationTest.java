@@ -5,6 +5,7 @@ import io.hhplus.ecommerce.cart.application.dto.command.CartItemAddCommand;
 import io.hhplus.ecommerce.cart.application.dto.command.CartItemUpdateCommand;
 import io.hhplus.ecommerce.cart.application.dto.result.CartItemDto;
 import io.hhplus.ecommerce.cart.application.usecase.*;
+import io.hhplus.ecommerce.common.constants.RedisKeyType;
 import io.hhplus.ecommerce.common.exception.BusinessException;
 import io.hhplus.ecommerce.config.TestContainerConfig;
 import io.hhplus.ecommerce.product.domain.entity.Product;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -28,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.awaitility.Awaitility.await;
 
 
 @SpringBootTest
@@ -46,6 +49,9 @@ class CartIntegrationTest {
 
     @Autowired
     JpaUserRepository  jpaUserRepository;
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
 
     List<Product> productList = new ArrayList<>();
     User user;
@@ -152,4 +158,25 @@ class CartIntegrationTest {
                 .updatedAt(LocalDateTime.now())
                 .build();
     }
+
+    @Test
+    @DisplayName("장바구니 추가 후 랭킹 누적 이벤트가 실행된다.")
+    void addCartVerifyEventExecution() {
+        //Given
+        CartItemAddCommand command = CartItemAddCommand.builder()
+                .quantity(1)
+                .productId(productList.get(0).getId())
+                .userId(user.getId())
+                .build();
+
+        //When
+        cartAddUseCase.execute(command);
+
+        //Then
+        await().untilAsserted(() -> {
+           String count = redisTemplate.opsForValue().get(RedisKeyType.PRODUCT_CART.getKey(productList.get(0).getId()));
+           assertThat(count).isEqualTo("1");
+        });
+    }
+
 }
