@@ -1,4 +1,4 @@
-package io.hhplus.ecommerce.cart.domain.listener;
+package io.hhplus.ecommerce.cart.application.listener;
 
 import io.hhplus.ecommerce.cart.domain.service.CartService;
 import io.hhplus.ecommerce.order.domain.event.OrderCompletedEvent;
