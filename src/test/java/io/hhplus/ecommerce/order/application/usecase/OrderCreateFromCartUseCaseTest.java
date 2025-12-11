@@ -11,10 +11,9 @@ import io.hhplus.ecommerce.order.domain.dto.OrderInfo;
 import io.hhplus.ecommerce.order.domain.entity.Order;
 import io.hhplus.ecommerce.order.domain.exception.OrderErrorCode;
 import io.hhplus.ecommerce.order.domain.service.OrderService;
-import io.hhplus.ecommerce.payment.domain.dto.command.PaymentProcessCommand;
-import io.hhplus.ecommerce.payment.domain.service.PaymentService;
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.service.ProductService;
+import io.hhplus.ecommerce.user.domain.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,9 +46,6 @@ class OrderCreateFromCartUseCaseTest {
     @Mock
     private CouponService couponService;
 
-    @Mock
-    private PaymentService paymentService;
-
     @InjectMocks
     private OrderCreateFromCartUseCase orderCreateFromCartUseCase;
 
@@ -58,6 +54,7 @@ class OrderCreateFromCartUseCaseTest {
     private CartItem cartItem1;
     private CartItem cartItem2;
     private Order order;
+    private User user;
 
     @BeforeEach
     void setUp() {
@@ -91,6 +88,7 @@ class OrderCreateFromCartUseCaseTest {
                 .build();
 
         order = OrderFixture.defaultOrder();
+        user  = UserFixture.defaultUser();
     }
 
     @Test
@@ -98,7 +96,7 @@ class OrderCreateFromCartUseCaseTest {
     void createOrderFromCart_Success_WithoutCoupon() {
         // Given: 쿠폰 없는 장바구니 주문
         OrderCreateFromCartCommand command = OrderCreateFromCartCommand.builder()
-                .userId(1L)
+                .userId(user.getId())
                 .cartItemIds(List.of(1L, 2L))
                 .couponId(null)
                 .build();
@@ -106,9 +104,6 @@ class OrderCreateFromCartUseCaseTest {
         // 1. 장바구니 아이템 조회
         given(cartService.getCartItemsByIds(List.of(1L, 2L)))
                 .willReturn(List.of(cartItem1, cartItem2));
-
-        // 2. orderId 생성
-        given(orderService.getNextOrderId()).willReturn(1L);
 
         // 3. 상품 조회 및 재고 차감
         given(productService.getProductsByIds(List.of(1L, 2L)))
@@ -119,14 +114,6 @@ class OrderCreateFromCartUseCaseTest {
         given(orderService.createOrderWithItems(any(OrderInfo.class)))
                 .willReturn(order);
 
-
-        PaymentProcessCommand paymentCommand = PaymentProcessCommand.of(
-                anyLong(), anyLong(), any(BigDecimal.class), anyList());
-
-
-        // 5. 결제 처리
-        doNothing().when(paymentService).processPayment(paymentCommand);
-
         // When: 주문 생성 실행
         OrderDto result = orderCreateFromCartUseCase.excute(command);
 
@@ -136,8 +123,7 @@ class OrderCreateFromCartUseCaseTest {
 
         // 서비스 호출 검증
         verify(cartService, times(1)).getCartItemsByIds(List.of(1L, 2L));
-        verify(orderService, times(1)).getNextOrderId();
-        verify(productService, times(1)).getProductsByIds(List.of(1L, 2L));
+         verify(productService, times(1)).getProductsByIds(List.of(1L, 2L));
         verify(productService, times(2)).decreaseStock(anyLong(), anyInt());
         verify(couponService, never()).validateCoupon(anyLong(), anyLong(), any(BigDecimal.class));
         verify(couponService, never()).calculateDisCountAmount(anyLong(), any(BigDecimal.class));
@@ -158,9 +144,6 @@ class OrderCreateFromCartUseCaseTest {
         given(cartService.getCartItemsByIds(List.of(1L, 2L)))
                 .willReturn(List.of(cartItem1, cartItem2));
 
-        // 2. orderId 생성
-        given(orderService.getNextOrderId()).willReturn(1L);
-
         // 3. 상품 조회 및 재고 차감
         given(productService.getProductsByIds(List.of(1L, 2L)))
                 .willReturn(List.of(product1, product2));
@@ -179,12 +162,6 @@ class OrderCreateFromCartUseCaseTest {
                 .willReturn(orderWithCoupon);
 
 
-        // 6. 결제 처리
-        PaymentProcessCommand paymentCommand = PaymentProcessCommand.of(
-                anyLong(), anyLong(), any(BigDecimal.class), anyList());
-
-        doNothing().when(paymentService).processPayment(paymentCommand);
-
         // When: 주문 생성 실행
         OrderDto result = orderCreateFromCartUseCase.excute(command);
 
@@ -195,7 +172,6 @@ class OrderCreateFromCartUseCaseTest {
 
         // 서비스 호출 검증
         verify(cartService, times(1)).getCartItemsByIds(List.of(1L, 2L));
-        verify(orderService, times(1)).getNextOrderId();
         verify(productService, times(1)).getProductsByIds(List.of(1L, 2L));
         verify(productService, times(2)).decreaseStock(anyLong(), anyInt());
         verify(couponService, times(1)).validateCoupon(eq(10L), eq(1L), any(BigDecimal.class));
@@ -234,7 +210,6 @@ class OrderCreateFromCartUseCaseTest {
         given(cartService.getCartItemsByIds(List.of(1L)))
                 .willReturn(List.of(cartItem1));
 
-        given(orderService.getNextOrderId()).willReturn(1L);
 
         given(productService.getProductsByIds(List.of(1L)))
                 .willReturn(List.of(product1));
