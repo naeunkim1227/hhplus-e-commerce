@@ -44,4 +44,10 @@ public class RankingEventListener {
         rankingService.removeLike(event.getProductId());
     }
 
+    @TransactionalEventListener
+    public void handleCartAdded(CartAddedEvent event) {
+        rankingService.recordCart(event.getProductId(), event.getUserId());
+    }
+
+
 }

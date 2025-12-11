@@ -1,13 +1,9 @@
 package io.hhplus.ecommerce.cart.presentation.controller;
 
 import io.hhplus.ecommerce.cart.application.dto.result.CartItemDto;
-import io.hhplus.ecommerce.cart.application.dto.command.CartItemAddCommand;
-import io.hhplus.ecommerce.cart.application.dto.command.CartItemDeleteCommand;
-import io.hhplus.ecommerce.cart.application.dto.command.CartItemUpdateCommand;
 import io.hhplus.ecommerce.cart.application.usecase.*;
 import io.hhplus.ecommerce.cart.domain.service.CartService;
 import io.hhplus.ecommerce.cart.presentation.dto.request.CartItemAddRequest;
-import io.hhplus.ecommerce.cart.presentation.dto.request.CartItemDeleteRequest;
 import io.hhplus.ecommerce.cart.presentation.dto.request.CartItemUpdateRequest;
 import io.hhplus.ecommerce.cart.presentation.dto.response.CartItemResponse;
 import io.hhplus.ecommerce.cart.presentation.dto.response.CartResponse;
@@ -17,10 +13,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @Tag(name = "장바구니 API", description = "장바구니 관련 API")
