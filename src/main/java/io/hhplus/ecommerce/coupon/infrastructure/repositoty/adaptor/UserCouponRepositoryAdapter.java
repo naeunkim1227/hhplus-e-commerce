@@ -41,4 +41,9 @@ public class UserCouponRepositoryAdapter implements UserCouponRepository {
     public List<UserCoupon> findByCouponId(Long couponId) {
         return jpaRepository.findByCouponId(couponId);
     }
+
+    @Override
+    public boolean existsByCouponIdAndUserId(Long couponId, Long userId) {
+        return false;
+    }
 }
