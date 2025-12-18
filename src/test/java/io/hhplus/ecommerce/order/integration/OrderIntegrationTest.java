@@ -386,4 +386,39 @@ public class OrderIntegrationTest {
 
     }
 
+
+    @Test
+    @DisplayName("상품 구매 후 카프카로 부가로직을 잘 수행하는지 확인한다.")
+    void createOrderAndVerifyKafkaExecution() {
+        // given
+        Product product = Product.builder()
+                .name("요구르트")
+                .price(new BigDecimal("1290"))
+                .stock(10L)
+                .status(ProductStatus.ACTIVE)
+                .version(0L)
+                .build();
+        Product newProduct = jpaProductRepository.save(product);
+        jpaProductRepository.flush();
+
+        final Long productId = newProduct.getId();
+
+        User user = User.builder()
+                .name("이뿌꾸")
+                .balance(BigDecimal.valueOf(1000000))
+                .build();
+        user = jpaUserRepository.saveAndFlush(user);
+
+        OrderCreateDirectCommand command = OrderCreateDirectCommand.builder()
+                .userId(user.getId())
+                .quantity(1)
+                .productId(productId)
+                .build();
+
+        orderCreateDirectUseCase.excute(command);
+        orderCreateDirectUseCase.excute(command);
+
     }
+
+
+}

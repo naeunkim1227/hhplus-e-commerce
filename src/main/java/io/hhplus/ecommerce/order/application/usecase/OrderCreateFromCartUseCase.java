@@ -3,6 +3,9 @@ package io.hhplus.ecommerce.order.application.usecase;
 import io.hhplus.ecommerce.cart.domain.entity.CartItem;
 import io.hhplus.ecommerce.cart.domain.service.CartService;
 import io.hhplus.ecommerce.common.exception.BusinessException;
+import io.hhplus.ecommerce.common.kafka.KafkaTopics;
+import io.hhplus.ecommerce.common.outbox.DomainType;
+import io.hhplus.ecommerce.common.outbox.OutboxService;
 import io.hhplus.ecommerce.coupon.domain.service.CouponService;
 import io.hhplus.ecommerce.order.application.dto.command.OrderCreateFromCartCommand;
 import io.hhplus.ecommerce.order.application.dto.result.OrderDto;
@@ -33,8 +36,8 @@ public class OrderCreateFromCartUseCase {
     private final ProductService productService;
     private final CartService cartService;
     private final CouponService couponService;
-    private final ApplicationEventPublisher eventPublisher;
     private final UserService userService;
+    private final OutboxService outboxService;
 
 
     @Transactional
@@ -109,7 +112,13 @@ public class OrderCreateFromCartUseCase {
                     order.getFinalAmount(),
                     command.getCartItemIds()
             );
-            eventPublisher.publishEvent(event);
+
+            outboxService.save(
+                    DomainType.ORDER,
+                    KafkaTopics.ORDER_EVENTS,
+                    order.getId().toString(),
+                    event
+            );
 
             return OrderDto.from(order, order.getOrderItems());
         } catch (Exception e) {
