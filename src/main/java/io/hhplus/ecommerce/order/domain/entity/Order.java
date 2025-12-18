@@ -56,7 +56,6 @@ public class Order {
     }
 
     public static Order create(
-            Long orderId,
             Long userId,
             Long couponId,
             BigDecimal totalAmount,
@@ -64,7 +63,6 @@ public class Order {
             BigDecimal finalAmount
     ) {
         return Order.builder()
-                .id(orderId)
                 .userId(userId)
                 .status(OrderStatus.PENDING)
                 .orderedAt(LocalDateTime.now())

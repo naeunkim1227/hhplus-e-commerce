@@ -6,6 +6,7 @@ import io.hhplus.ecommerce.order.domain.dto.OrderItemInfo;
 import io.hhplus.ecommerce.order.domain.entity.Order;
 import io.hhplus.ecommerce.order.domain.entity.OrderItem;
 import io.hhplus.ecommerce.order.domain.entity.OrderStatus;
+import io.hhplus.ecommerce.order.domain.event.OrderCompletedEvent;
 import io.hhplus.ecommerce.order.domain.exception.OrderErrorCode;
 import io.hhplus.ecommerce.order.domain.repository.OrderItemRepository;
 import io.hhplus.ecommerce.order.domain.repository.OrderRepository;
@@ -38,26 +39,19 @@ public class OrderService {
         private final List<OrderItem> orderItems;
     }
 
-
-
-    public Long getNextOrderId() {
-        return orderRepository.nextId();
-    }
-
     /**
      * 주문만 생성 (OrderItem 없이)
      * @deprecated createOrderWithItems 사용을 권장합니다
      */
     @Deprecated
     public Order createOrder(
-            Long orderId,
             Long userId,
             Long couponId,
             BigDecimal totalAmount,
             BigDecimal discountAmount,
             BigDecimal finalAmount
     ) {
-        Order order = Order.create(orderId, userId, couponId, totalAmount, discountAmount, finalAmount);
+        Order order = Order.create(userId, couponId, totalAmount, discountAmount, finalAmount);
         return orderRepository.save(order);
     }
 
@@ -132,11 +126,9 @@ public class OrderService {
         OrderCalculation calc = calculateOrder(orderInfo);
 
         // 2. Order 생성
-        Order order = Order.create(
-                orderInfo.orderId(), orderInfo.userId(), orderInfo.couponId() != null ? orderInfo.couponId() : 0L,
+        Order order = Order.create(orderInfo.userId(), orderInfo.couponId() != null ? orderInfo.couponId() : 0L,
                 calc.getTotalAmount(), calc.getDiscountAmount(), calc.getFinalAmount()
         );
-
         // 3. OrderItem 추가 (영속 엔티티에 추가)
         calc.getOrderItems().forEach(order::addOrderItem);
 

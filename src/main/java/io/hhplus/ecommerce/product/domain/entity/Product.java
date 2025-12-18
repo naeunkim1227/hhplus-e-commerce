@@ -28,8 +28,9 @@ public class Product {
     private BigDecimal price;
     private Long stock;
 
-    @Column(nullable = false)
-    private int likeCount = 0;
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "int default 0")
+    private Integer likeCount = 0;
 
     @Enumerated(EnumType.STRING)
     private ProductStatus status;

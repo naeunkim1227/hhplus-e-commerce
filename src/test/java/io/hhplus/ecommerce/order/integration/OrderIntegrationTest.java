@@ -24,6 +24,7 @@ import io.hhplus.ecommerce.order.infrastructure.repositoty.jpa.JpaOrderRepositor
 import io.hhplus.ecommerce.product.domain.entity.Product;
 import io.hhplus.ecommerce.product.domain.entity.ProductStatus;
 import io.hhplus.ecommerce.product.infrastructure.repositoty.jpa.JpaProductRepository;
+import io.hhplus.ecommerce.ranking.domain.service.RankingService;
 import io.hhplus.ecommerce.user.domain.entity.User;
 import io.hhplus.ecommerce.user.infrastructure.repositoty.jpa.JpaUserRepository;
 import jakarta.persistence.EntityManager;
@@ -33,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -44,6 +46,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 
 @SpringBootTest
@@ -85,6 +88,8 @@ public class OrderIntegrationTest {
     CartItem savedCartItem;
     @Autowired
     private JpaOrderRepository jpaOrderRepository;
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
 
     @BeforeEach
     void setUp() {
@@ -148,7 +153,6 @@ public class OrderIntegrationTest {
                         .userId(savedUser.getId())
                         .cartItemIds(List.of(savedCartItem.getId()))
                         .build();
-
 
 
         //When
@@ -360,5 +364,26 @@ public class OrderIntegrationTest {
     }
 
 
+    @Test
+    @DisplayName("장바구니에 있는 상품을 조회하고 부가로직 이벤트를 잘 수행하는지 확인한다.")
+    void createOrderAndVerifyEventExecution() {
+        //Given
+        OrderCreateFromCartCommand command =
+                OrderCreateFromCartCommand.builder()
+                        .userId(savedUser.getId())
+                        .cartItemIds(List.of(savedCartItem.getId()))
+                        .build();
 
-}
+        //When
+        OrderDto orderDto = orderCreateFromCartUseCase.excute(command);
+
+        //Then
+        await().untilAsserted(() -> {
+            assertThat(orderDto).isNotNull();
+            assertThat(orderDto.getOrderItems()).hasSize(1);
+            assertThat(jpaCartRepository.findById(savedCartItem.getId())).isEmpty();
+        });
+
+    }
+
+    }

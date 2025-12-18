@@ -7,16 +7,14 @@ import java.util.List;
 
 
 public record OrderInfo (
-    Long orderId,
     Long userId,
     Long couponId,
     List<OrderItemInfo> orderItems,
     BigDecimal discountAmount
 ){
 
-    public static OrderInfo from(Long orderId,Long userId, Long couponId, List<OrderItemInfo> orderItems, BigDecimal discountAmount) {
+    public static OrderInfo from(Long userId, Long couponId, List<OrderItemInfo> orderItems, BigDecimal discountAmount) {
         return new OrderInfo(
-                orderId,
                 userId,
                 couponId,
                 orderItems,

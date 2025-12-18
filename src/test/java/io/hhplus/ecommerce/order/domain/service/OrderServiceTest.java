@@ -179,7 +179,7 @@ public class OrderServiceTest  {
         given(orderRepository.save(any(Order.class))).willReturn(savedOrder);
 
         // When
-        Order result = orderService.createOrder(1L, 100L, 1L, totalAmount, discountAmount, finalAmount);
+        Order result = orderService.createOrder(100L, 1L, totalAmount, discountAmount, finalAmount);
 
         // Then
         assertThat(result).isNotNull();
