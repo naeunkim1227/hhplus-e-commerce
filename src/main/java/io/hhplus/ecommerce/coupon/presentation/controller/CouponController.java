@@ -1,6 +1,7 @@
 package io.hhplus.ecommerce.coupon.presentation.controller;
 
 import io.hhplus.ecommerce.common.response.CommonResponse;
+import io.hhplus.ecommerce.coupon.domain.service.CouponIssueKafkaService;
 import io.hhplus.ecommerce.coupon.domain.service.CouponIssueQueueService;
 import io.hhplus.ecommerce.coupon.domain.entity.UserCoupon;
 import io.hhplus.ecommerce.coupon.domain.service.CouponService;
@@ -19,7 +20,7 @@ import java.util.List;
 @Validated
 public class CouponController {
 
-    private final CouponIssueQueueService couponIssueQueueService;
+    private final CouponIssueKafkaService couponIssueKafkaService;
     private final CouponService couponService;
 
     @PostMapping("/{couponId}/issue")
@@ -30,7 +31,8 @@ public class CouponController {
             @Parameter(description = "사용자 ID", example = "1")
             @RequestParam Long userId) {
 
-        return CommonResponse.success(CouponIssueResponse.fromResult(couponIssueQueueService.addToQueue(userId, couponId)));
+        return CommonResponse.success(CouponIssueResponse
+                .fromResult(couponIssueKafkaService.requestCouponIssue(couponId, userId)));
     }
 
     @GetMapping("/users/{userId}")

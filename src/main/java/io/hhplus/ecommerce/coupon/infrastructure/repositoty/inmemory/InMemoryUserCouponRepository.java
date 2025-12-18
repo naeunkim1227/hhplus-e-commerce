@@ -67,4 +67,8 @@ public class InMemoryUserCouponRepository implements UserCouponRepository {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public boolean existsByCouponIdAndUserId(Long couponId, Long userId) {
+        return false;
+    }
 }

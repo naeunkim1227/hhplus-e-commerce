@@ -1,6 +1,9 @@
 package io.hhplus.ecommerce.order.application.usecase;
 
 import io.hhplus.ecommerce.common.exception.BusinessException;
+import io.hhplus.ecommerce.common.kafka.KafkaTopics;
+import io.hhplus.ecommerce.common.outbox.DomainType;
+import io.hhplus.ecommerce.common.outbox.OutboxService;
 import io.hhplus.ecommerce.coupon.domain.service.CouponService;
 import io.hhplus.ecommerce.order.application.dto.command.OrderCreateDirectCommand;
 import io.hhplus.ecommerce.order.application.dto.result.OrderDto;
@@ -29,7 +32,7 @@ public class OrderCreateDirectUseCase {
     private final ProductService productService;
     private final CouponService couponService;
     private final UserService userService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxService outboxService;
 
     @Transactional
     public OrderDto excute(OrderCreateDirectCommand command) {
@@ -71,9 +74,15 @@ public class OrderCreateDirectUseCase {
                     order.getFinalAmount(),
                     null
             );
-            eventPublisher.publishEvent(event);
 
+            outboxService.save(
+                    DomainType.ORDER,
+                    KafkaTopics.ORDER_EVENTS,
+                    order.getId().toString(),
+                    event
+            );
             return OrderDto.from(order, order.getOrderItems());
+
         }catch (Exception e){
             //재고 차감 이후 프로세스에서 실패시 보상 트랜잭션 추가
             try {
