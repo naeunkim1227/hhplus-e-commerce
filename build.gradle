@@ -50,6 +50,10 @@ dependencies {
     implementation 'org.redisson:redisson-spring-boot-starter:3.27.2'
     implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 
+    // Monitoring
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
     // Kafka
     implementation 'org.springframework.kafka:spring-kafka'
     testImplementation 'org.springframework.kafka:spring-kafka-test'

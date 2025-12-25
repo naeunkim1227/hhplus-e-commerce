@@ -84,10 +84,67 @@ services:
     networks:
       - ecommerce-network
 
+  # Prometheus - 메트릭 수집
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ecommerce-prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - ecommerce-network
+
+  # Grafana - 메트릭 시각화
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: ecommerce-grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - ecommerce-network
+
+  # JMeter - 부하 테스트 도구 (Performance Testing)
+  jmeter:
+    build:
+      context: ./docker/jmeter
+      dockerfile: Dockerfile
+    image: ecommerce-jmeter:latest
+    container_name: ecommerce-jmeter
+    network_mode: host
+    volumes:
+      - ./jmeter:/tests
+      - ./jmeter/results:/results
+    profiles:
+      - donotstart
+
 volumes:
   mysql_data:
   redis_data:
   kafka_data:
+  prometheus-data:
+  grafana-data:
 
 networks:
   ecommerce-network:
