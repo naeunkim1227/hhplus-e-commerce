@@ -20,7 +20,7 @@ import java.util.List;
 @Validated
 public class CouponController {
 
-    private final CouponIssueKafkaService couponIssueKafkaService;
+    private final CouponIssueQueueService couponIssueQueueService;
     private final CouponService couponService;
 
     @PostMapping("/{couponId}/issue")
@@ -32,7 +32,7 @@ public class CouponController {
             @RequestParam Long userId) {
 
         return CommonResponse.success(CouponIssueResponse
-                .fromResult(couponIssueKafkaService.requestCouponIssue(couponId, userId)));
+                .fromResult(couponIssueQueueService.addToQueue(userId, couponId)));
     }
 
     @GetMapping("/users/{userId}")
