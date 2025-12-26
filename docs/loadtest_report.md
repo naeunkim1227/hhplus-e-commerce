@@ -138,6 +138,9 @@ spring.datasource.hikari.max-lifetime=1800000
 - 병목 탐색을 만들 케이스는 극단적으로 db의 커넥션 풀을 줄이는 것이라고 생각했습니다. 이에 따라 임의로 커넥션 풀을 조정한 뒤 선착순 쿠폰 발급을 테스트 해보았습니다.
 - 그라파나와 프로메테우스 설정을 통해 모니터링을 진행해 보았습니다.
 
+
+### 1) 선착순 쿠폰에서의 병목
+
 - 환경
  - 동시 사용자 수: 500
  - Ramp-up 시간: 10초
@@ -176,7 +179,7 @@ server.tomcat.accept-count=5
 server.tomcat.connection-timeout=30000
 ```
 
-![](./image/44.png)
+![Thread만 줄이기](./image/44.png)
 
 
 3. HikariCP만 줄이기 → DB 커넥션 병목 확인
@@ -186,13 +189,13 @@ spring.datasource.hikari.maximum-pool-size=3
 spring.datasource.hikari.minimum-idle=1          
 spring.datasource.hikari.connection-timeout=3000
 ```
-![](./image/33.png)
+![HikariCP만](./image/33.png)
 
 
 4. 둘 다 줄이기 → 전체 시스템 병목 확인
 
 해당 설정을 바탕으로 모니터링 해본 결과 비교표입니다.
-![](./image/22.png)
+![둘 다 줄이기](./image/22.png)
 
 
 ## 피크 테스트 설정별 성능 비교
@@ -266,7 +269,65 @@ spring.datasource.hikari.connection-timeout=3000
 | **메모리 사용량** | 설정과 무관하게 25-30MB로 비슷 |
 
 
+### 2) 슬로우 쿼리에서의 병목
+- 임시로 SLEEP(10) 함수를 사용하여 슬로우 쿼리임을 가정하여 테스트 해보았습니다.
+- spring.datasource.hikari.maximum-pool-size=50 일때로 요청량을 늘려 테스트 해보았을때,  최대 커넥션 갯수인 50개요청은 성공하였으나 그 이후 100개, 200개 요청은 최대로 받을수있는 요청량 50개만 제외하고 실패하였습니다. 
+spring.datasource.hikari.connection-timeout=3000이 3초 였기 때문입니다. 
+
+```
+환경
+- 동시 사용자 수: 50
+- Ramp-up 시간: 1초
+- Loop Count: 1
+- Duration: 10초
+```
+![](./image/50r_20slow.png)
+![](./image/jmeter_50r_20slow.png)
+
+
+```
+환경
+- 동시 사용자 수: 100
+- Ramp-up 시간: 1초
+- Loop Count: 1
+- Duration: 10초
+```
+![](./image/100r_20slow.png)
+![](./image/jmeter_100r_20slow.png)
+
+
+
+```
+환경
+- 동시 사용자 수: 200
+- Ramp-up 시간: 1초
+- Loop Count: 1
+- Duration: 10초
+```
+![](./image/jmeter_200r_20slow.png)
+
+
+-> 이후 슬로우 쿼리 시간을 10초, 최대 커넥션 시간을 30초로 하여 테스트 해보았습니다. 
+```
+spring.datasource.hikari.connection-timeout=30000
+spring.datasource.hikari.validation-timeout=20000 
+```
+```
+동시 사용자 수: 100
+Ramp-up 시간: 1초
+Loop Count: 1
+Duration: 10초
+```
+
+![](./image/100r_10slow.png)
+![](./image/jmeter_100r_10slow.png)
+
+위에서 실패한 1초당 100개 요청에 대하여 성공한것을 확인 할 수 있었습니다.
+슬로우쿼리 개선의 중요성을 깨닫는 테스트 였습니다.
+
+
 # 3. 결론
-병목테스트를 위해서 조금 극단적으로 스레드와 커넥션 수를 조정해 보았는데요. 실제로 조정한대로 병목이 일어나고, rps가 떨어지는 것을 시각화하여 볼수 있어서 좋았습니다.
+병목테스트를 위해서 조금 극단적으로 스레드와 커넥션 수를 조정해보고 슬로우 쿼리를 수행하여 테스트 해보았을때, 
+실제로 조정한대로 병목이 일어나고 rps가 떨어지는 것을 시각화하여 볼수 있어서 좋았습니다.
 선착순 쿠폰에 대하여 점진적으로 개선하면서 db의 락이나 메시지 브로커를 도입하는 것에만 초점이 가있었는데, 그보다 가장 중요한것은 이런 세팅이 아닐까..하며 역시 뭐든 기초를 탄탄히 해야한다는
 생각이 들었습니다... 실무에서 그냥 이미 세팅된 ELK를 사용하다 보니 실제로 세팅해본적은 없었는데 이번 과제를 통해 조금이나마 모니터링 시스템에 대해 공부할 수 있었던 것 같습니다.
