@@ -71,4 +71,10 @@ public class InMemoryUserCouponRepository implements UserCouponRepository {
     public boolean existsByCouponIdAndUserId(Long couponId, Long userId) {
         return false;
     }
+
+    @Override
+    public List<UserCoupon> findByUserIdWithSlowQuery(Long userId) {
+        // 테스트 환경에서는 슬로우 쿼리 없이 바로 반환
+        return findByUserId(userId);
+    }
 }

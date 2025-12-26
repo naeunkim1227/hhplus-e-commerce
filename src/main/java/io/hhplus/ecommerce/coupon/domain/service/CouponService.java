@@ -9,6 +9,7 @@ import io.hhplus.ecommerce.coupon.domain.repository.CouponRepository;
 import io.hhplus.ecommerce.coupon.domain.repository.UserCouponRepository;
 import io.hhplus.ecommerce.coupon.domain.validator.CouponValidator;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class CouponService {
@@ -41,6 +43,15 @@ public class CouponService {
      */
     public List<UserCoupon> getUserCoupon(Long userId) {
         return userCouponRepository.findByUserId(userId);
+    }
+
+    /**
+     * 유저의 쿠폰 조회 (슬로우 쿼리 시뮬레이션)
+     * 병목 테스트를 위해 20초 대기 후 결과 반환
+     */
+    public List<UserCoupon> getUserCouponWithSlowQuery(Long userId) {
+        log.info("Slow query for user coupon - userId: {}", userId);
+        return userCouponRepository.findByUserIdWithSlowQuery(userId);
     }
 
     /**

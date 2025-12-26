@@ -42,4 +42,12 @@ public class CouponController {
             @PathVariable Long userId) {
         return CommonResponse.success(couponService.getUserCoupon(userId));
     }
+
+    @GetMapping("/users/{userId}/slow")
+    @Operation(summary = "내 쿠폰 조회 (슬로우 쿼리)", description = "병목 테스트를 위한 슬로우 쿼리 시뮬레이션 (20초 대기)")
+    public CommonResponse<List<UserCoupon>> getUserCouponsWithSlowQuery(
+            @Parameter(description = "유저 ID", example = "1")
+            @PathVariable Long userId) {
+        return CommonResponse.success(couponService.getUserCouponWithSlowQuery(userId));
+    }
 }
