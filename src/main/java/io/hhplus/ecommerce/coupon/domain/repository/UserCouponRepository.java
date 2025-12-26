@@ -9,7 +9,9 @@ public interface UserCouponRepository {
     UserCoupon save(UserCoupon userCoupon);
     Optional<UserCoupon> findById(Long id);
     List<UserCoupon> findByUserId(Long userId);
-    Optional<UserCoupon>  findByUserIdAndCouponId(Long userId, Long couponId);
+    Optional<UserCoupon> findByUserIdAndCouponId(Long userId, Long couponId);
     List<UserCoupon> findByCouponId(Long couponId);
+    boolean existsByCouponIdAndUserId(Long couponId, Long userId);
 
+    List<UserCoupon> findByUserIdWithSlowQuery(Long userId);
 }

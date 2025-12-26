@@ -15,4 +15,5 @@ import lombok.NoArgsConstructor;
 public class CouponIssueCommand {
     private Long couponId;
     private Long userId;
+    private String requestId;
 }

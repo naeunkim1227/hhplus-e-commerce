@@ -1,6 +1,7 @@
 package io.hhplus.ecommerce.coupon.presentation.controller;
 
 import io.hhplus.ecommerce.common.response.CommonResponse;
+import io.hhplus.ecommerce.coupon.domain.service.CouponIssueKafkaService;
 import io.hhplus.ecommerce.coupon.domain.service.CouponIssueQueueService;
 import io.hhplus.ecommerce.coupon.domain.entity.UserCoupon;
 import io.hhplus.ecommerce.coupon.domain.service.CouponService;
@@ -30,7 +31,8 @@ public class CouponController {
             @Parameter(description = "사용자 ID", example = "1")
             @RequestParam Long userId) {
 
-        return CommonResponse.success(CouponIssueResponse.fromResult(couponIssueQueueService.addToQueue(userId, couponId)));
+        return CommonResponse.success(CouponIssueResponse
+                .fromResult(couponIssueQueueService.addToQueue(userId, couponId)));
     }
 
     @GetMapping("/users/{userId}")
@@ -39,5 +41,13 @@ public class CouponController {
             @Parameter(description = "유저 ID", example = "1")
             @PathVariable Long userId) {
         return CommonResponse.success(couponService.getUserCoupon(userId));
+    }
+
+    @GetMapping("/users/{userId}/slow")
+    @Operation(summary = "내 쿠폰 조회 (슬로우 쿼리)", description = "병목 테스트를 위한 슬로우 쿼리 시뮬레이션 (20초 대기)")
+    public CommonResponse<List<UserCoupon>> getUserCouponsWithSlowQuery(
+            @Parameter(description = "유저 ID", example = "1")
+            @PathVariable Long userId) {
+        return CommonResponse.success(couponService.getUserCouponWithSlowQuery(userId));
     }
 }
